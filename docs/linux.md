@@ -36,7 +36,7 @@ requiere CMake 3.14 o posterior.
 Cuando el repositorio esté publicado:
 
 ```bash
-git clone https://github.com/USUARIO/local-ai-hardware-bench.git
+git clone https://github.com/CarlosCHD24/local-ai-hardware-bench.git
 cd local-ai-hardware-bench
 ./bin/linux-smoke cpu
 ```
