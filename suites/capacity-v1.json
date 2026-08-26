@@ -1,0 +1,63 @@
+{
+  "$schema": "../schemas/suite.schema.json",
+  "schema_version": 1,
+  "id": "capacity-v1",
+  "title": "Memory capacity benchmark v1",
+  "description": "Explora el límite de memoria con modelos grandes, offload automático y aceleración completa.",
+  "runtime": {
+    "id": "llama.cpp",
+    "repository": "https://github.com/ggml-org/llama.cpp.git",
+    "revision": "4d19b287691e8f47fc303be420f630c40ec45684",
+    "binary": "llama-bench",
+    "gpu_layers": 99
+  },
+  "model_manifest": "model-manifest-capacity-v1.json",
+  "models": [
+    "qwen2.5-14b-instruct-q4_k_m",
+    "qwen2.5-32b-instruct-q4_k_m"
+  ],
+  "profiles": [
+    {
+      "id": "auto-fit",
+      "description": "Ajusta la colocación para conservar 1 GiB libre en el dispositivo.",
+      "fit_target_mib": 1024,
+      "fit_context": 4096,
+      "load_mode": "mmap",
+      "verbose": true
+    },
+    {
+      "id": "full-accelerator",
+      "description": "Solicita todas las capas; en CUDA activa memoria unificada para medir spill hacia RAM.",
+      "gpu_layers": 99,
+      "load_mode": "mmap",
+      "verbose": true,
+      "cuda_unified_memory": true
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "tg32",
+      "description": "Generación breve de 32 tokens para medir decode bajo presión de memoria.",
+      "prompt_tokens": 0,
+      "generated_tokens": 32
+    },
+    {
+      "id": "pp512",
+      "description": "Procesamiento de un prompt de 512 tokens.",
+      "prompt_tokens": 512,
+      "generated_tokens": 0
+    }
+  ],
+  "repetitions": 3,
+  "warmup_runs": 0,
+  "timeout_seconds": 300,
+  "model_time_budget_seconds": 300,
+  "cooldown_seconds": 5,
+  "skip_remaining_after_memory_failure": true,
+  "skip_remaining_after_capacity_failure": true,
+  "memory_monitoring": {
+    "interval_ms": 1000,
+    "max_swap_growth_bytes": 8589934592,
+    "min_available_percent": 3
+  }
+}

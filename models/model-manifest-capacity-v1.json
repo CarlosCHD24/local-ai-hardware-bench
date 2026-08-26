@@ -1,0 +1,79 @@
+{
+  "$schema": "../schemas/model-manifest.schema.json",
+  "schema_version": 1,
+  "id": "qwen2.5-capacity-q4_k_m-v1",
+  "family": "Qwen2.5 Instruct",
+  "quantization": "Q4_K_M",
+  "license": "Apache-2.0",
+  "license_url": "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-GGUF/blob/2b6a96d780143b4e8e3b970394e39e3774551f29/LICENSE",
+  "models": [
+    {
+      "id": "qwen2.5-14b-instruct-q4_k_m",
+      "parameters_billions": 14.7,
+      "layers": 48,
+      "repository": "Qwen/Qwen2.5-14B-Instruct-GGUF",
+      "revision": "2b6a96d780143b4e8e3b970394e39e3774551f29",
+      "primary_artifact": "qwen2.5-14b-instruct-q4_k_m-00001-of-00003.gguf",
+      "artifacts": [
+        {
+          "filename": "qwen2.5-14b-instruct-q4_k_m-00001-of-00003.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-GGUF/resolve/2b6a96d780143b4e8e3b970394e39e3774551f29/qwen2.5-14b-instruct-q4_k_m-00001-of-00003.gguf?download=true",
+          "size_bytes": 3991999872,
+          "sha256": "a09ea5e7b1eafb1b30b241726c3cc3c905c96f14ad41e246ffa5f44e53904f68"
+        },
+        {
+          "filename": "qwen2.5-14b-instruct-q4_k_m-00002-of-00003.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-GGUF/resolve/2b6a96d780143b4e8e3b970394e39e3774551f29/qwen2.5-14b-instruct-q4_k_m-00002-of-00003.gguf?download=true",
+          "size_bytes": 3989373504,
+          "sha256": "21b9457d079680d284e90ef69607c4b2d8ef64a09d4729cb7b5e1357bdba41ae"
+        },
+        {
+          "filename": "qwen2.5-14b-instruct-q4_k_m-00003-of-00003.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-GGUF/resolve/2b6a96d780143b4e8e3b970394e39e3774551f29/qwen2.5-14b-instruct-q4_k_m-00003-of-00003.gguf?download=true",
+          "size_bytes": 1006737120,
+          "sha256": "c8d37006760a387a35216e070e6664d7da927f10be8eb870fef2e3d4833d9976"
+        }
+      ]
+    },
+    {
+      "id": "qwen2.5-32b-instruct-q4_k_m",
+      "parameters_billions": 32.5,
+      "layers": 64,
+      "repository": "Qwen/Qwen2.5-32B-Instruct-GGUF",
+      "revision": "a15e3cc10f8bbb2c0af6f8f1f34a32e3b060c09d",
+      "primary_artifact": "qwen2.5-32b-instruct-q4_k_m-00001-of-00005.gguf",
+      "artifacts": [
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00001-of-00005.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct-GGUF/resolve/a15e3cc10f8bbb2c0af6f8f1f34a32e3b060c09d/qwen2.5-32b-instruct-q4_k_m-00001-of-00005.gguf?download=true",
+          "size_bytes": 3961498272,
+          "sha256": "403434e5c845452c013661d586b97d5a53cf207462d180a07c301eafa9390d05"
+        },
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00002-of-00005.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct-GGUF/resolve/a15e3cc10f8bbb2c0af6f8f1f34a32e3b060c09d/qwen2.5-32b-instruct-q4_k_m-00002-of-00005.gguf?download=true",
+          "size_bytes": 3948996064,
+          "sha256": "7371e5c5d717a8c20f526dbfce5d3f201dc3f02140d1c836314cd0756e02e8d7"
+        },
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00003-of-00005.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct-GGUF/resolve/a15e3cc10f8bbb2c0af6f8f1f34a32e3b060c09d/qwen2.5-32b-instruct-q4_k_m-00003-of-00005.gguf?download=true",
+          "size_bytes": 3993478688,
+          "sha256": "f023ccc294c3bd3b2eac5b2dd40dea3aa4ca1d06c7460ead67c36386cd62e8fc"
+        },
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00004-of-00005.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct-GGUF/resolve/a15e3cc10f8bbb2c0af6f8f1f34a32e3b060c09d/qwen2.5-32b-instruct-q4_k_m-00004-of-00005.gguf?download=true",
+          "size_bytes": 3950347744,
+          "sha256": "05fe76d941454390cd7aa0de3b342f83a1d1226a959479af85bbfae7cd93e771"
+        },
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00005-of-00005.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct-GGUF/resolve/a15e3cc10f8bbb2c0af6f8f1f34a32e3b060c09d/qwen2.5-32b-instruct-q4_k_m-00005-of-00005.gguf?download=true",
+          "size_bytes": 3997015616,
+          "sha256": "8c2e8ecc686129c37821bd9f3b3e251e6ae80deadd3d3348f7e3e84492a63c24"
+        }
+      ]
+    }
+  ]
+}

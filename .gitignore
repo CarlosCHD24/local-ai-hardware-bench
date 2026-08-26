@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Runtimes, models and local benchmark output can be very large.
+.local-ai-bench/
+results/**
+!results/README.md
+

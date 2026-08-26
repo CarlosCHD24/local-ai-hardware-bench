@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "local-ai-hardware-bench"
+version = "0.2.0"
+description = "Benchmark reproducible y multiplataforma para inferencia de IA local"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Local AI Hardware Bench contributors" }]
+keywords = ["benchmark", "llama.cpp", "gguf", "local-ai", "hardware"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: System :: Benchmark",
+]
+dependencies = []
+
+[project.scripts]
+local-ai-bench = "local_ai_bench.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/local_ai_bench"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/docs",
+  "/models",
+  "/schemas",
+  "/suites",
+  "/README.md",
+  "/LICENSE",
+]

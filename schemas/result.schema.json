@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/local-ai-bench/result.schema.json",
+  "title": "Normalized benchmark result",
+  "type": "object",
+  "required": ["schema_version", "suite", "system_id", "run_id", "started_at", "finished_at", "runtime", "models", "results"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "suite": {
+      "type": "object",
+      "required": ["id", "schema_version"],
+      "properties": {
+        "id": { "type": "string" },
+        "schema_version": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "system_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "runtime": { "type": "object" },
+    "models": { "type": "array", "items": { "type": "object" } },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["model_id", "scenario_id", "status"],
+        "properties": {
+          "model_id": { "type": "string" },
+          "scenario_id": { "type": "string" },
+          "status": { "enum": ["ok", "failed", "timeout", "skipped", "oom", "aborted_pressure"] },
+          "profile_id": { "type": "string" },
+          "metrics": { "type": "object" },
+          "memory": { "type": "object" },
+          "runtime_details": { "type": "object" },
+          "raw_file": { "type": "string" },
+          "error": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

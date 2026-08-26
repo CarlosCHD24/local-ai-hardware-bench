@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/local-ai-bench/system.schema.json",
+  "title": "Anonymous system description",
+  "type": "object",
+  "required": ["schema_version", "system_id", "collected_at", "platform", "cpu", "memory", "accelerators", "software"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "system_id": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{1,63}$" },
+    "collected_at": { "type": "string", "format": "date-time" },
+    "platform": { "type": "object" },
+    "cpu": { "type": "object" },
+    "memory": { "type": "object" },
+    "accelerators": { "type": "array", "items": { "type": "object" } },
+    "software": { "type": "object" },
+    "power": { "type": "object" }
+  },
+  "additionalProperties": false
+}
+

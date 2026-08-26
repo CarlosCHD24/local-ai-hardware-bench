@@ -1,0 +1,63 @@
+{
+  "$schema": "../schemas/model-manifest.schema.json",
+  "schema_version": 1,
+  "id": "model-manifest-v1",
+  "family": "Qwen2.5 Instruct",
+  "quantization": "Q4_K_M",
+  "license": "Apache-2.0",
+  "license_url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/blob/main/LICENSE",
+  "models": [
+    {
+      "id": "qwen2.5-1.5b-instruct-q4_k_m",
+      "parameters_billions": 1.54,
+      "repository": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",
+      "primary_artifact": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+      "artifacts": [
+        {
+          "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/91cad51170dc346986eccefdc2dd33a9da36ead9/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+          "size_bytes": 1117320736,
+          "sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e"
+        }
+      ]
+    },
+    {
+      "id": "qwen2.5-3b-instruct-q4_k_m",
+      "parameters_billions": 3.09,
+      "repository": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "revision": "7dabda4d13d513e3e842b20f0d435c732f172cbe",
+      "primary_artifact": "qwen2.5-3b-instruct-q4_k_m.gguf",
+      "artifacts": [
+        {
+          "filename": "qwen2.5-3b-instruct-q4_k_m.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/7dabda4d13d513e3e842b20f0d435c732f172cbe/qwen2.5-3b-instruct-q4_k_m.gguf",
+          "size_bytes": 2104932768,
+          "sha256": "626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d"
+        }
+      ]
+    },
+    {
+      "id": "qwen2.5-7b-instruct-q4_k_m",
+      "parameters_billions": 7.62,
+      "repository": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "revision": "bb5d59e06d9551d752d08b292a50eb208b07ab1f",
+      "primary_artifact": "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf",
+      "artifacts": [
+        {
+          "filename": "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/resolve/bb5d59e06d9551d752d08b292a50eb208b07ab1f/qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf",
+          "size_bytes": 3993201344,
+          "sha256": "dfce12e3862a5283ccfb88221b48480e58745165de856439950d0f22590580db"
+        },
+        {
+          "filename": "qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/resolve/bb5d59e06d9551d752d08b292a50eb208b07ab1f/qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf",
+          "size_bytes": 689872288,
+          "sha256": "539cf93f78e887edea1c04e2d7d8cdaca9d01dae9c9025bcb8accbe29df3d72a"
+        }
+      ]
+    }
+  ]
+}
+

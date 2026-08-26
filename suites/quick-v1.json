@@ -1,0 +1,44 @@
+{
+  "$schema": "../schemas/suite.schema.json",
+  "schema_version": 1,
+  "id": "quick-v1",
+  "title": "Quick hardware benchmark v1",
+  "description": "Suite breve y reproducible para comparar inferencia local con llama.cpp.",
+  "runtime": {
+    "id": "llama.cpp",
+    "repository": "https://github.com/ggml-org/llama.cpp.git",
+    "revision": "4d19b287691e8f47fc303be420f630c40ec45684",
+    "binary": "llama-bench",
+    "gpu_layers": 99
+  },
+  "model_manifest": "model-manifest-v1.json",
+  "models": [
+    "qwen2.5-1.5b-instruct-q4_k_m",
+    "qwen2.5-3b-instruct-q4_k_m",
+    "qwen2.5-7b-instruct-q4_k_m"
+  ],
+  "scenarios": [
+    {
+      "id": "pp512",
+      "description": "Procesamiento de un prompt de 512 tokens.",
+      "prompt_tokens": 512,
+      "generated_tokens": 0
+    },
+    {
+      "id": "pp4096",
+      "description": "Procesamiento de un prompt de 4096 tokens.",
+      "prompt_tokens": 4096,
+      "generated_tokens": 0
+    },
+    {
+      "id": "tg128",
+      "description": "Generación de 128 tokens sin medir el prefill.",
+      "prompt_tokens": 0,
+      "generated_tokens": 128
+    }
+  ],
+  "repetitions": 5,
+  "warmup_runs": 1,
+  "timeout_seconds": 900
+}
+

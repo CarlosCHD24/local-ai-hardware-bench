@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/local-ai-bench/suite.schema.json",
+  "title": "Local AI Hardware Bench suite",
+  "type": "object",
+  "required": ["schema_version", "id", "runtime", "model_manifest", "models", "scenarios", "repetitions", "warmup_runs"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "runtime": {
+      "type": "object",
+      "required": ["id", "repository", "revision", "binary", "gpu_layers"],
+      "properties": {
+        "id": { "type": "string" },
+        "repository": { "type": "string", "format": "uri" },
+        "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "binary": { "type": "string" },
+        "gpu_layers": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "model_manifest": { "type": "string" },
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string" }
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$" },
+          "description": { "type": "string" },
+          "gpu_layers": { "type": "integer", "minimum": 0 },
+          "fit_target_mib": { "type": "integer", "minimum": 0 },
+          "fit_context": { "type": "integer", "minimum": 0 },
+          "load_mode": { "enum": ["auto", "none", "mmap", "mlock", "mmap+mlock", "dio"] },
+          "verbose": { "type": "boolean" },
+          "cuda_unified_memory": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "prompt_tokens", "generated_tokens"],
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "prompt_tokens": { "type": "integer", "minimum": 0 },
+          "generated_tokens": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "repetitions": { "type": "integer", "minimum": 1 },
+    "warmup_runs": { "type": "integer", "minimum": 0 },
+    "timeout_seconds": { "type": "integer", "minimum": 1 },
+    "model_time_budget_seconds": { "type": "integer", "minimum": 1 },
+    "cooldown_seconds": { "type": "number", "minimum": 0, "maximum": 60 },
+    "skip_remaining_after_memory_failure": { "type": "boolean" },
+    "skip_remaining_after_capacity_failure": { "type": "boolean" },
+    "memory_monitoring": {
+      "type": "object",
+      "properties": {
+        "interval_ms": { "type": "integer", "minimum": 200 },
+        "max_swap_growth_bytes": { "type": "integer", "minimum": 1 },
+        "min_available_percent": { "type": "number", "minimum": 0, "maximum": 100 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,40 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run unit tests
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+      - name: Exercise CLI
+        run: ./bin/local-ai-bench --suite quick-v1 doctor --backend cpu --json
+      - name: Validate capacity suite
+        run: ./bin/local-ai-bench --suite capacity-v1 doctor --backend cpu --json
+
+  linux-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Smoke test checkout
+        run: ./bin/linux-smoke cpu
+      - name: Compile pinned llama.cpp CPU runtime
+        run: ./bin/local-ai-bench prepare --backend cpu --skip-models --jobs 2
+      - name: Verify compiled runtime
+        run: ./bin/local-ai-bench doctor --backend cpu

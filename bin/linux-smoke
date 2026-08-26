@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+selected_backend=${1:-cpu}
+
+if [[ $(uname -s) != "Linux" ]]; then
+    echo "error: linux-smoke sólo puede ejecutarse en Linux" >&2
+    exit 2
+fi
+
+python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else "Se requiere Python 3.11+")'
+
+cd "$project_dir"
+PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
+./bin/local-ai-bench doctor --backend "$selected_backend"

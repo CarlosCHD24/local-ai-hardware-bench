@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/local-ai-bench/model-manifest.schema.json",
+  "title": "Local AI Hardware Bench model manifest",
+  "type": "object",
+  "required": ["schema_version", "id", "family", "quantization", "license", "models"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string" },
+    "family": { "type": "string" },
+    "quantization": { "type": "string" },
+    "license": { "type": "string" },
+    "license_url": { "type": "string", "format": "uri" },
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "parameters_billions", "repository", "revision", "primary_artifact", "artifacts"],
+        "properties": {
+          "id": { "type": "string" },
+          "parameters_billions": { "type": "number", "exclusiveMinimum": 0 },
+          "layers": { "type": "integer", "minimum": 1 },
+          "repository": { "type": "string" },
+          "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+          "primary_artifact": { "type": "string" },
+          "artifacts": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["filename", "url", "size_bytes", "sha256"],
+              "properties": {
+                "filename": { "type": "string" },
+                "url": { "type": "string", "format": "uri" },
+                "size_bytes": { "type": "integer", "minimum": 1 },
+                "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
