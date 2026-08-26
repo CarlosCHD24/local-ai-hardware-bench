@@ -6,4 +6,3 @@ publicar una ejecución, añádela explícitamente a Git después de revisar que
 
 Cada ejecución conserva el manifiesto, la descripción anónima del sistema, las
 salidas brutas de `llama-bench`, el resultado normalizado y un informe Markdown.
-

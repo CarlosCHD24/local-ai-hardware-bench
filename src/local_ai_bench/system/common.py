@@ -67,4 +67,3 @@ def executable_version(binary: Path) -> str | None:
         return None
     output = (completed.stdout + "\n" + completed.stderr).strip()
     return output.splitlines()[0] if output else None
-

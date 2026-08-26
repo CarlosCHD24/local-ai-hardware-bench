@@ -28,4 +28,3 @@ def suite_path(suite: str, root: Path | None = None) -> Path:
         return requested.resolve()
     name = suite if suite.endswith(".json") else f"{suite}.json"
     return (root or project_root()) / "suites" / name
-

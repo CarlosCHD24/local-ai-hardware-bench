@@ -25,4 +25,3 @@ resultado de forma explícita, ya que `results/**` está ignorado por defecto.
 No elimines repeticiones ni errores y no edites las métricas normalizadas a
 mano; si un parser necesita corregirse, regenera el informe desde los datos
 brutos.
-

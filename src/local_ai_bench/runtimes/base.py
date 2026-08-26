@@ -23,4 +23,3 @@ class RuntimeAdapter(ABC):
     @abstractmethod
     def parse(self, output: str) -> list[dict[str, Any]]:
         """Parse raw output into runtime records."""
-

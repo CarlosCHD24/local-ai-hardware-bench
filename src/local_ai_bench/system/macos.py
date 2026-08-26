@@ -69,4 +69,3 @@ def _as_int(value: str | None) -> int | None:
         return int(value) if value is not None else None
     except ValueError:
         return None
-

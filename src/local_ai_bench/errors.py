@@ -12,4 +12,3 @@ class PreparationError(BenchError):
 
 class ResultValidationError(BenchError):
     """A result directory is incomplete or inconsistent."""
-

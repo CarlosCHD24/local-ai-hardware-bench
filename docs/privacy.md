@@ -13,4 +13,3 @@ en el comando registrado, pero no puede garantizar el contenido de stderr
 producido por herramientas externas.
 
 Utiliza un `system-id` descriptivo pero anónimo, como `desktop-rtx4070-32gb`.
-

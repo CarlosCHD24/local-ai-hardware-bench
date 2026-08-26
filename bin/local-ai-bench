@@ -8,4 +8,3 @@ sys.path.insert(0, str(ROOT / "src"))
 from local_ai_bench.cli import main
 
 raise SystemExit(main())
-

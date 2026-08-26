@@ -12,4 +12,3 @@ Los adaptadores implementan `prepare`, `command` y `parse` definidos en
 MLX, ONNX Runtime y servidores OpenAI-compatible deben comenzar como suites
 separadas. Solo deberían incorporarse a una comparación común después de
 validar que el trabajo medido es equivalente.
-
