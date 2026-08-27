@@ -3,7 +3,7 @@ set -euo pipefail
 
 project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 runtime_dir=${LOCAL_AI_BENCH_HOME:-"${project_dir}/.local-ai-bench"}/runtimes/llama.cpp
-source_dir=${LOCAL_AI_SERVER_SOURCE_DIR:-"${runtime_dir}/source"}
+source_dir=${LOCAL_AI_SERVER_SOURCE_DIR:-"${runtime_dir}"}
 build_dir=${LOCAL_AI_SERVER_BUILD_DIR:-"${runtime_dir}/build-cuda"}
 jobs=${LOCAL_AI_SERVER_BUILD_JOBS:-8}
 

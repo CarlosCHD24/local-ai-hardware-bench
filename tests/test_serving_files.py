@@ -6,6 +6,12 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class ServingFilesTests(unittest.TestCase):
+    def test_builder_uses_prepared_llama_cpp_checkout_as_source(self):
+        builder = (ROOT / "bin/build-local-ai-server").read_text()
+        self.assertIn(
+            'source_dir=${LOCAL_AI_SERVER_SOURCE_DIR:-"${runtime_dir}"}', builder
+        )
+
     def test_service_uses_launcher_and_user_configuration(self):
         unit = (ROOT / "deploy/systemd/local-ai-server.service").read_text()
         self.assertIn("EnvironmentFile=-%h/.config/local-ai/server.env", unit)
