@@ -18,8 +18,17 @@
   ],
   "profiles": [
     {
+      "id": "cpu-resident",
+      "description": "Carga el modelo en RAM y fuerza ejecución CPU sin offload.",
+      "backends": ["cpu"],
+      "gpu_layers": 0,
+      "load_mode": "mmap",
+      "verbose": true
+    },
+    {
       "id": "auto-fit",
       "description": "Ajusta la colocación para conservar 1 GiB libre en el dispositivo.",
+      "backends": ["cuda", "metal", "vulkan"],
       "fit_target_mib": 1024,
       "fit_context": 4096,
       "load_mode": "mmap",
@@ -28,6 +37,7 @@
     {
       "id": "full-accelerator",
       "description": "Solicita todas las capas; en CUDA activa memoria unificada para medir spill hacia RAM.",
+      "backends": ["cuda", "metal", "vulkan"],
       "gpu_layers": 99,
       "load_mode": "mmap",
       "verbose": true,

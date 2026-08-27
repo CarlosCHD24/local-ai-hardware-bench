@@ -12,9 +12,18 @@ La primera versión fija Qwen2.5 Instruct 14B y 32B en `Q4_K_M`, tres
 repeticiones y dos escenarios breves: `tg32` y `pp512`. Los artefactos,
 revisiones y SHA-256 están fijados en el manifiesto.
 
-El perfil `auto-fit` utiliza `--fit-target 1024 --fit-ctx 4096`; no fija
-`n_gpu_layers`, de modo que `llama.cpp` puede ajustar la colocación. El perfil
-`full-accelerator` solicita 99 capas. Ambos fijan el modo de carga `mmap`.
+Los perfiles se seleccionan según el backend:
+
+- `cpu-resident`: exclusivo de CPU. Fuerza cero capas de GPU y carga mediante
+  `mmap` para observar RAM, page faults y swap sin parámetros de VRAM.
+- `auto-fit`: exclusivo de backends acelerados. Utiliza
+  `--fit-target 1024 --fit-ctx 4096` y permite que `llama.cpp` ajuste la
+  colocación.
+- `full-accelerator`: exclusivo de backends acelerados. Solicita 99 capas y,
+  sólo en CUDA, activa Unified Memory. Fija el modo de carga `mmap`.
+
+Esta separación evita que una ejecución CPU intente adaptar el modelo a un
+dispositivo GPU inexistente y evita repetir dos perfiles equivalentes en CPU.
 
 ## Telemetría
 

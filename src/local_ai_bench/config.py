@@ -127,6 +127,19 @@ def validate_suite(suite: dict[str, Any], manifest: dict[str, Any]) -> None:
             raise ConfigError("Un perfil no puede combinar fit_target_mib y gpu_layers")
         if "cuda_unified_memory" in profile and not isinstance(profile["cuda_unified_memory"], bool):
             raise ConfigError("profiles[].cuda_unified_memory debe ser booleano")
+        backends = profile.get("backends")
+        if backends is not None:
+            allowed_backends = {"cpu", "cuda", "metal", "vulkan"}
+            if (
+                not isinstance(backends, list)
+                or not backends
+                or any(not isinstance(backend, str) for backend in backends)
+                or any(backend not in allowed_backends for backend in backends)
+                or len(set(backends)) != len(backends)
+            ):
+                raise ConfigError(
+                    "profiles[].backends debe contener backends válidos y no duplicados"
+                )
 
     monitoring = suite.get("memory_monitoring")
     if monitoring is not None:
@@ -199,7 +212,7 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
 
 
 def selected_profiles(
-    suite: dict[str, Any], requested: list[str] | None = None
+    suite: dict[str, Any], requested: list[str] | None = None, backend: str | None = None
 ) -> list[dict[str, Any]]:
     profiles = suite.get("profiles") or [{"id": "default"}]
     by_id = {profile["id"]: profile for profile in profiles}
@@ -209,7 +222,22 @@ def selected_profiles(
         raise ConfigError(f"Perfiles desconocidos: {', '.join(unknown)}")
     if len(set(ids)) != len(ids):
         raise ConfigError("La selección contiene perfiles duplicados")
-    return [by_id[profile_id] for profile_id in ids]
+    selected = [by_id[profile_id] for profile_id in ids]
+    if backend is None:
+        return selected
+    compatible = [
+        profile
+        for profile in selected
+        if not profile.get("backends") or backend in profile["backends"]
+    ]
+    if requested and len(compatible) != len(selected):
+        incompatible = [profile["id"] for profile in selected if profile not in compatible]
+        raise ConfigError(
+            f"Perfiles no compatibles con el backend {backend}: {', '.join(incompatible)}"
+        )
+    if not compatible:
+        raise ConfigError(f"La suite no tiene perfiles compatibles con el backend {backend}")
+    return compatible
 
 
 def validate_system_id(system_id: str) -> str:

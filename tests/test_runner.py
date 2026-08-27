@@ -5,15 +5,27 @@ import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from local_ai_bench.config import load_config
 from local_ai_bench.models import update_verify_cache
-from local_ai_bench.runner import _parse_runtime_placement, _success_record, execute_suite
+from local_ai_bench.runner import (
+    _parse_runtime_placement,
+    _remaining_timeout,
+    _success_record,
+    execute_suite,
+)
 from local_ai_bench.runtimes.llamacpp import LlamaCppRuntime
 from local_ai_bench.validate import validate_result_dir
 
 
 class RunnerIntegrationTests(unittest.TestCase):
+    @patch("local_ai_bench.runner.time.monotonic", return_value=125.0)
+    def test_remaining_timeout_shares_model_budget(self, monotonic) -> None:
+        self.assertEqual(_remaining_timeout(300, 200.0), 75.0)
+        self.assertEqual(_remaining_timeout(300, 100.0), 0.0)
+        self.assertEqual(_remaining_timeout(300, None), 300.0)
+
     def test_parses_actual_offload_and_buffer_placement(self) -> None:
         details = _parse_runtime_placement(
             "llama_model_load: offloaded 40/49 layers to GPU\n"

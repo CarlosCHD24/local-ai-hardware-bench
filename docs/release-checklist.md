@@ -28,6 +28,15 @@
 - [ ] Se registran RAM, swap y VRAM del proceso cuando el driver lo permite.
 - [ ] Ningún modelo excede el presupuesto total de cinco minutos.
 
+## Linux AMD CPU
+
+- [ ] `./bin/linux-smoke cpu` termina correctamente.
+- [ ] `doctor --backend cpu` selecciona CPU aunque Vulkan esté instalado.
+- [ ] `quick-v1` ejecuta 1.5B, 3B y 7B con cero capas de GPU.
+- [ ] `capacity-v1` selecciona únicamente `cpu-resident`.
+- [ ] El informe registra RAM disponible, RSS del proceso, swap y page faults.
+- [ ] Ningún modelo excede el presupuesto total de cinco minutos.
+
 ## Privacidad y publicación
 
 - [ ] Se revisan `system.json`, `manifest.json` y `raw/*.stderr.txt`.

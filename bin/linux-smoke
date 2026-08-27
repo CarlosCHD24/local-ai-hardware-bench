@@ -2,12 +2,20 @@
 set -euo pipefail
 
 project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-selected_backend=${1:-cpu}
+selected_backend=${1:-auto}
 
 if [[ $(uname -s) != "Linux" ]]; then
     echo "error: linux-smoke sólo puede ejecutarse en Linux" >&2
     exit 2
 fi
+
+case "$selected_backend" in
+    auto|cpu|cuda|vulkan) ;;
+    *)
+        echo "error: backend no válido: $selected_backend (usa auto, cpu, cuda o vulkan)" >&2
+        exit 2
+        ;;
+esac
 
 python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else "Se requiere Python 3.11+")'
 

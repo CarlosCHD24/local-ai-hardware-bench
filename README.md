@@ -25,12 +25,17 @@ La descarga completa de modelos ocupa aproximadamente 7.4 GiB.
 
 `capacity-v1` complementa el microbenchmark rápido y explora el límite de
 memoria con Qwen2.5 14B y 32B `Q4_K_M` (aproximadamente 26.9 GiB en total).
-Ejecuta dos perfiles:
+Ejecuta perfiles compatibles con el backend seleccionado:
 
+- `cpu-resident`: carga mediante `mmap` y fuerza CPU sin offload.
 - `auto-fit`: deja que `llama.cpp` ajuste la colocación conservando 1 GiB de
   margen en el dispositivo.
 - `full-accelerator`: solicita todas las capas y conserva OOM o aborto por
   presión como resultados válidos.
+
+En CPU sólo se ejecuta `cpu-resident`; CUDA, Metal y Vulkan usan `auto-fit` y
+`full-accelerator`. Así no se aplican opciones de ajuste de VRAM a equipos que
+carecen de una GPU compatible.
 
 Cada proceso se muestrea una vez por segundo. Se registran swap, compresión,
 memoria disponible, page-ins/page-outs, colocación real de capas y buffers y,
@@ -84,8 +89,11 @@ encuentra `nvcc` y `nvidia-smi`, y CPU en el resto. Se puede forzar la decisión
 En Linux se puede ejecutar primero el smoke test sin descargar modelos:
 
 ```bash
-./bin/linux-smoke cpu
+./bin/linux-smoke
 ```
+
+Sin argumento, el smoke test usa detección automática: CUDA cuando están
+disponibles `nvidia-smi` y `nvcc`, CPU en el resto.
 
 ### 2. Preparar runtime y modelos
 
@@ -125,9 +133,9 @@ El identificador del sistema debe ser público y no contener hostname, nombre de
 usuario ni número de serie:
 
 ```bash
-./bin/local-ai-bench run --system-id desktop-rtx4070
+./bin/local-ai-bench run --system-id desktop-rtx3060-12gb --backend cuda
 ./bin/local-ai-bench run --system-id macbook-m4-16gb
-./bin/local-ai-bench run --system-id ryzen-5400h-linux --backend cpu
+./bin/local-ai-bench run --system-id honor-pro16-ryzen5400h-16gb --backend cpu
 ```
 
 Para una primera comprobación se puede ejecutar únicamente el modelo pequeño:
@@ -147,10 +155,10 @@ La suite de capacidad permite seleccionar modelo y perfil:
   --profile auto-fit
 ```
 
-`capacity-v1` aplica un presupuesto total máximo de 5 minutos por modelo,
-compartido entre sus perfiles y escenarios. Si se alcanza un `timeout`, un
-`oom` o el corte por presión de memoria, registra el resultado y omite las
-cargas restantes de ese modelo.
+Tanto `quick-v1` como `capacity-v1` aplican un presupuesto total máximo de 5
+minutos por modelo, compartido entre sus perfiles y escenarios. Si se alcanza
+un `timeout`, un `oom` o el corte por presión de memoria, registra el resultado
+y omite las cargas restantes de ese modelo.
 
 ### 4. Comparar
 

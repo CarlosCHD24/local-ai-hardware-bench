@@ -142,7 +142,7 @@ def dispatch(args: argparse.Namespace) -> int:
             threads=args.threads,
             force_hash=args.verify_checksums,
             fail_fast=args.fail_fast,
-            profiles=selected_profiles(config.suite, args.profiles),
+            profiles=selected_profiles(config.suite, args.profiles, backend),
         )
         print(f"\nResultado: {run_dir}")
         print(f"Informe: {run_dir / 'report.md'}")

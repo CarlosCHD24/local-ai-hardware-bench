@@ -18,20 +18,21 @@ class LinuxTests(unittest.TestCase):
             meminfo = root / "meminfo"
             os_release.write_text('NAME="Ubuntu"\nPRETTY_NAME="Ubuntu 24.04 LTS"\nID=ubuntu\n')
             cpuinfo.write_text("processor: 0\nmodel name: AMD Ryzen 5 5400H\n")
-            meminfo.write_text("MemTotal:       32768000 kB\n")
+            meminfo.write_text("MemTotal:       16384000 kB\n")
 
             self.assertEqual(_os_release(os_release)["ID"], "ubuntu")
             self.assertEqual(_cpu_model(cpuinfo), "AMD Ryzen 5 5400H")
-            self.assertEqual(_memory_bytes(meminfo), 32768000 * 1024)
+            self.assertEqual(_memory_bytes(meminfo), 16384000 * 1024)
 
     @patch("local_ai_bench.system.linux.command_output")
     def test_parses_nvidia_gpu(self, command_output) -> None:
-        command_output.return_value = "NVIDIA GeForce RTX 4070, 16376, 590.10"
+        command_output.return_value = "NVIDIA GeForce RTX 3060, 12288, 590.10"
 
         devices = _nvidia_gpus()
 
         self.assertEqual(devices[0]["vendor"], "NVIDIA")
-        self.assertEqual(devices[0]["memory_bytes"], 16376 * 1024 * 1024)
+        self.assertEqual(devices[0]["name"], "NVIDIA GeForce RTX 3060")
+        self.assertEqual(devices[0]["memory_bytes"], 12288 * 1024 * 1024)
         self.assertEqual(devices[0]["driver"], "590.10")
 
     @patch("local_ai_bench.system.detect.shutil.which")

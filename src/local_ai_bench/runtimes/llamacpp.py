@@ -137,7 +137,7 @@ class LlamaCppRuntime(RuntimeAdapter):
         ]
         if profile.get("verbose"):
             command.append("-v")
-        if profile.get("fit_target_mib") is not None:
+        if profile.get("fit_target_mib") is not None and self.backend != "cpu":
             command.extend(["-fitt", str(profile["fit_target_mib"])])
             if profile.get("fit_context") is not None:
                 command.extend(["-fitc", str(profile["fit_context"])])

@@ -48,7 +48,7 @@ def execute_suite(
         raise BenchError(f"No existe {binary}; ejecuta prepare o utiliza --runtime-binary")
     for model in models:
         verify_model(home, model, force_hash=force_hash)
-    profiles = profiles or selected_profiles(config.suite)
+    profiles = profiles or selected_profiles(config.suite, backend=runtime.backend)
 
     run_id = run_id_now()
     run_dir = output_root / config.suite["id"] / system_id / run_id
@@ -92,7 +92,7 @@ def execute_suite(
     }
     write_json(run_dir / "results.json", result)
 
-    timeout = int(config.suite.get("timeout_seconds", 900))
+    timeout = int(config.suite.get("timeout_seconds", 300))
     monitoring = config.suite.get("memory_monitoring")
     cooldown = float(config.suite.get("cooldown_seconds", 0))
     skip_after_memory_failure = bool(config.suite.get("skip_remaining_after_memory_failure", False))
@@ -129,9 +129,7 @@ def execute_suite(
                     write_json(run_dir / "results.json", result)
                     continue
 
-                scenario_timeout = float(timeout)
-                if model_deadline is not None:
-                    scenario_timeout = min(scenario_timeout, max(0.1, model_deadline - time.monotonic()))
+                scenario_timeout = _remaining_timeout(timeout, model_deadline)
 
                 print(f"▶ {label}")
                 command = runtime.command(
@@ -160,6 +158,7 @@ def execute_suite(
                         profile,
                         monitoring,
                     )
+                    scenario_timeout = _remaining_timeout(timeout, model_deadline)
                     measured_command = _with_memory_measurement(command)
                     completed, memory_summary, memory_samples = _run_monitored_command(
                         measured_command,
@@ -239,7 +238,13 @@ def execute_suite(
                     write_report(run_dir)
                     raise BenchError(f"La prueba falló: {label}")
                 if cooldown and model["id"] not in blocked_models:
-                    time.sleep(cooldown)
+                    cooldown_remaining = cooldown
+                    if model_deadline is not None:
+                        cooldown_remaining = min(
+                            cooldown, max(0.0, model_deadline - time.monotonic())
+                        )
+                    if cooldown_remaining:
+                        time.sleep(cooldown_remaining)
 
     from .report import write_report
 
@@ -507,6 +512,12 @@ def _run_command(
         stdout, stderr = process.communicate()
         raise subprocess.TimeoutExpired(command, timeout, output=stdout, stderr=stderr) from exc
     return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+
+
+def _remaining_timeout(timeout: float, deadline: float | None) -> float:
+    if deadline is None:
+        return float(timeout)
+    return min(float(timeout), max(0.0, deadline - time.monotonic()))
 
 
 def _run_monitored_command(

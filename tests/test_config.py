@@ -29,14 +29,42 @@ class ConfigTests(unittest.TestCase):
             "qwen2.5-32b-instruct-q4_k_m",
         ])
         self.assertEqual([profile["id"] for profile in selected_profiles(loaded.suite)], [
+            "cpu-resident",
             "auto-fit",
             "full-accelerator",
         ])
+        self.assertEqual(
+            [profile["id"] for profile in selected_profiles(loaded.suite, backend="cpu")],
+            ["cpu-resident"],
+        )
+        self.assertEqual(
+            [profile["id"] for profile in selected_profiles(loaded.suite, backend="cuda")],
+            ["auto-fit", "full-accelerator"],
+        )
         self.assertEqual(selected_profiles(loaded.suite, ["auto-fit"])[0]["fit_target_mib"], 1024)
         self.assertEqual(loaded.suite["timeout_seconds"], 300)
         self.assertEqual(loaded.suite["model_time_budget_seconds"], 300)
         self.assertTrue(loaded.suite["skip_remaining_after_capacity_failure"])
         self.assertTrue(selected_profiles(loaded.suite, ["full-accelerator"])[0]["cuda_unified_memory"])
+
+    def test_quick_suite_caps_each_model_at_five_minutes(self) -> None:
+        loaded = load_config("quick-v1", ROOT)
+        self.assertEqual(loaded.suite["timeout_seconds"], 300)
+        self.assertEqual(loaded.suite["model_time_budget_seconds"], 300)
+
+    def test_rejects_profile_incompatible_with_backend(self) -> None:
+        loaded = load_config("capacity-v1", ROOT)
+        with self.assertRaises(ConfigError):
+            selected_profiles(loaded.suite, ["full-accelerator"], backend="cpu")
+
+    def test_rejects_malformed_profile_backends(self) -> None:
+        loaded = load_config("capacity-v1", ROOT)
+        suite = dict(loaded.suite)
+        suite["profiles"] = [
+            dict(loaded.suite["profiles"][0], backends=[{"cpu": True}])
+        ]
+        with self.assertRaises(ConfigError):
+            validate_suite(suite, loaded.manifest)
 
     def test_rejects_invalid_model_time_budget(self) -> None:
         loaded = load_config("capacity-v1", ROOT)

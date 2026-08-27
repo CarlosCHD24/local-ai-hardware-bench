@@ -39,5 +39,6 @@
   ],
   "repetitions": 5,
   "warmup_runs": 1,
-  "timeout_seconds": 900
+  "timeout_seconds": 300,
+  "model_time_budget_seconds": 300
 }

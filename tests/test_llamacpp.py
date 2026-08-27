@@ -60,6 +60,21 @@ class LlamaCppTests(unittest.TestCase):
             self.assertEqual(command[command.index("-fitc") + 1], "4096")
             self.assertIn("-v", command)
 
+    def test_cpu_never_uses_device_memory_fitting(self) -> None:
+        with TemporaryDirectory() as directory:
+            binary = Path(directory) / "llama-bench"
+            binary.touch()
+            runtime = LlamaCppRuntime(self.runtime_config, Path(directory), "cpu", binary)
+            command = runtime.command(
+                Path("model.gguf"),
+                {"prompt_tokens": 0, "generated_tokens": 32},
+                repetitions=3,
+                profile={"fit_target_mib": 1024, "fit_context": 4096},
+            )
+            self.assertNotIn("-fitt", command)
+            self.assertNotIn("-fitc", command)
+            self.assertEqual(command[command.index("-ngl") + 1], "0")
+
     def test_cuda_unified_memory_is_scoped_to_cuda(self) -> None:
         with TemporaryDirectory() as directory:
             binary = Path(directory) / "llama-bench"

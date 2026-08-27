@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Smoke test checkout
-        run: ./bin/linux-smoke cpu
+        run: ./bin/linux-smoke
       - name: Compile pinned llama.cpp CPU runtime
         run: ./bin/local-ai-bench prepare --backend cpu --skip-models --jobs 2
       - name: Verify compiled runtime
