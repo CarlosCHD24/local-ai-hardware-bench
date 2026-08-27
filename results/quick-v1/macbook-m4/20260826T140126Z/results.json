@@ -1,0 +1,492 @@
+{
+  "finished_at": "2026-08-26T14:07:37.193203Z",
+  "models": [
+    {
+      "artifacts": [
+        {
+          "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+          "sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+          "size_bytes": 1117320736
+        }
+      ],
+      "id": "qwen2.5-1.5b-instruct-q4_k_m",
+      "parameters_billions": 1.54,
+      "primary_artifact": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+      "repository": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9"
+    },
+    {
+      "artifacts": [
+        {
+          "filename": "qwen2.5-3b-instruct-q4_k_m.gguf",
+          "sha256": "626b4a6678b86442240e33df819e00132d3ba7dddfe1cdc4fbb18e0a9615c62d",
+          "size_bytes": 2104932768
+        }
+      ],
+      "id": "qwen2.5-3b-instruct-q4_k_m",
+      "parameters_billions": 3.09,
+      "primary_artifact": "qwen2.5-3b-instruct-q4_k_m.gguf",
+      "repository": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "revision": "7dabda4d13d513e3e842b20f0d435c732f172cbe"
+    },
+    {
+      "artifacts": [
+        {
+          "filename": "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf",
+          "sha256": "dfce12e3862a5283ccfb88221b48480e58745165de856439950d0f22590580db",
+          "size_bytes": 3993201344
+        },
+        {
+          "filename": "qwen2.5-7b-instruct-q4_k_m-00002-of-00002.gguf",
+          "sha256": "539cf93f78e887edea1c04e2d7d8cdaca9d01dae9c9025bcb8accbe29df3d72a",
+          "size_bytes": 689872288
+        }
+      ],
+      "id": "qwen2.5-7b-instruct-q4_k_m",
+      "parameters_billions": 7.62,
+      "primary_artifact": "qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf",
+      "repository": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+      "revision": "bb5d59e06d9551d752d08b292a50eb208b07ab1f"
+    }
+  ],
+  "results": [
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 439566666,
+        "duration_ns_stddev": 439302,
+        "peak_resident_memory_bytes": 1259143168,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          440169666,
+          439900500,
+          439284125,
+          439253250,
+          439225792
+        ],
+        "samples_tokens_per_second": [
+          1163.19,
+          1163.9,
+          1165.53,
+          1165.61,
+          1165.69
+        ],
+        "tokens_per_second_mean": 1164.784426,
+        "tokens_per_second_stddev": 1.161532
+      },
+      "model_id": "qwen2.5-1.5b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-1.5b-instruct-q4_k_m--pp512.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 1777088000,
+        "model_size": 1111370240,
+        "model_type": "qwen2 1.5B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "pp512",
+      "status": "ok"
+    },
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 4007954091,
+        "duration_ns_stddev": 88773297,
+        "peak_resident_memory_bytes": 1369178112,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          3920308667,
+          3930274458,
+          3995036833,
+          4067453416,
+          4126697084
+        ],
+        "samples_tokens_per_second": [
+          1044.82,
+          1042.17,
+          1025.27,
+          1007.02,
+          992.561
+        ],
+        "tokens_per_second_mean": 1022.366776,
+        "tokens_per_second_stddev": 22.518658
+      },
+      "model_id": "qwen2.5-1.5b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-1.5b-instruct-q4_k_m--pp4096.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 1777088000,
+        "model_size": 1111370240,
+        "model_type": "qwen2 1.5B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "pp4096",
+      "status": "ok"
+    },
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 1439262291,
+        "duration_ns_stddev": 8071845,
+        "peak_resident_memory_bytes": 1244659712,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          1452898875,
+          1433747625,
+          1434213583,
+          1435076791,
+          1440374583
+        ],
+        "samples_tokens_per_second": [
+          88.0997,
+          89.2765,
+          89.2475,
+          89.1938,
+          88.8658
+        ],
+        "tokens_per_second_mean": 88.936675,
+        "tokens_per_second_stddev": 0.495921
+      },
+      "model_id": "qwen2.5-1.5b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-1.5b-instruct-q4_k_m--tg128.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 1777088000,
+        "model_size": 1111370240,
+        "model_type": "qwen2 1.5B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "tg128",
+      "status": "ok"
+    },
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 976899533,
+        "duration_ns_stddev": 1785270,
+        "peak_resident_memory_bytes": 2255044608,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          973737625,
+          977343041,
+          977564666,
+          977958500,
+          977893834
+        ],
+        "samples_tokens_per_second": [
+          525.809,
+          523.869,
+          523.751,
+          523.54,
+          523.574
+        ],
+        "tokens_per_second_mean": 524.108522,
+        "tokens_per_second_stddev": 0.959968
+      },
+      "model_id": "qwen2.5-3b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-3b-instruct-q4_k_m--pp512.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 3397103616,
+        "model_size": 2098976768,
+        "model_type": "qwen2 3B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "pp512",
+      "status": "ok"
+    },
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 8564631808,
+        "duration_ns_stddev": 2200352,
+        "peak_resident_memory_bytes": 2392883200,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          8564959208,
+          8567783125,
+          8565248666,
+          8562062625,
+          8563105417
+        ],
+        "samples_tokens_per_second": [
+          478.228,
+          478.07,
+          478.211,
+          478.389,
+          478.331
+        ],
+        "tokens_per_second_mean": 478.24592,
+        "tokens_per_second_stddev": 0.122804
+      },
+      "model_id": "qwen2.5-3b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-3b-instruct-q4_k_m--pp4096.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 3397103616,
+        "model_size": 2098976768,
+        "model_type": "qwen2 3B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "pp4096",
+      "status": "ok"
+    },
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 2692177358,
+        "duration_ns_stddev": 4017170,
+        "peak_resident_memory_bytes": 2234073088,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          2698764417,
+          2693088541,
+          2690645125,
+          2688893291,
+          2689495417
+        ],
+        "samples_tokens_per_second": [
+          47.4291,
+          47.5291,
+          47.5722,
+          47.6032,
+          47.5926
+        ],
+        "tokens_per_second_mean": 47.545243,
+        "tokens_per_second_stddev": 0.070849
+      },
+      "model_id": "qwen2.5-3b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-3b-instruct-q4_k_m--tg128.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 3397103616,
+        "model_size": 2098976768,
+        "model_type": "qwen2 3B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "tg128",
+      "status": "ok"
+    },
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 2209779600,
+        "duration_ns_stddev": 2343673,
+        "peak_resident_memory_bytes": 4835426304,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          2208112500,
+          2206690917,
+          2210357208,
+          2212411750,
+          2211325625
+        ],
+        "samples_tokens_per_second": [
+          231.872,
+          232.022,
+          231.637,
+          231.422,
+          231.535
+        ],
+        "tokens_per_second_mean": 231.697524,
+        "tokens_per_second_stddev": 0.245797
+      },
+      "model_id": "qwen2.5-7b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-7b-instruct-q4_k_m--pp512.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 7615616512,
+        "model_size": 4677120000,
+        "model_type": "qwen2 7B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "pp512",
+      "status": "ok"
+    },
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 18687321316,
+        "duration_ns_stddev": 2144629,
+        "peak_resident_memory_bytes": 5053874176,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          18685007333,
+          18689035458,
+          18689181000,
+          18684991666,
+          18688391125
+        ],
+        "samples_tokens_per_second": [
+          219.213,
+          219.166,
+          219.164,
+          219.213,
+          219.173
+        ],
+        "tokens_per_second_mean": 219.186045,
+        "tokens_per_second_stddev": 0.025104
+      },
+      "model_id": "qwen2.5-7b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-7b-instruct-q4_k_m--pp4096.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 7615616512,
+        "model_size": 4677120000,
+        "model_type": "qwen2 7B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "pp4096",
+      "status": "ok"
+    },
+    {
+      "error": null,
+      "metrics": {
+        "duration_ns_mean": 5808165058,
+        "duration_ns_stddev": 14799341,
+        "peak_resident_memory_bytes": 4815929344,
+        "sample_count": 5,
+        "samples_duration_ns": [
+          5793220709,
+          5795418458,
+          5815720542,
+          5807498875,
+          5828966709
+        ],
+        "samples_tokens_per_second": [
+          22.0948,
+          22.0864,
+          22.0093,
+          22.0405,
+          21.9593
+        ],
+        "tokens_per_second_mean": 22.038056,
+        "tokens_per_second_stddev": 0.056108
+      },
+      "model_id": "qwen2.5-7b-instruct-q4_k_m",
+      "raw_file": "raw/qwen2.5-7b-instruct-q4_k_m--tg128.json",
+      "runtime_details": {
+        "cpu_mask": "0x0",
+        "cpu_strict": false,
+        "flash_attn": -1,
+        "main_gpu": 0,
+        "model_n_params": 7615616512,
+        "model_size": 4677120000,
+        "model_type": "qwen2 7B Q4_K - Medium",
+        "n_batch": 2048,
+        "n_gpu_layers": 99,
+        "n_threads": 4,
+        "n_ubatch": 512,
+        "poll": 50,
+        "split_mode": "layer",
+        "tensor_split": "0.00",
+        "type_k": "f16",
+        "type_v": "f16"
+      },
+      "scenario_id": "tg128",
+      "status": "ok"
+    }
+  ],
+  "run_id": "20260826T140126Z",
+  "runtime": {
+    "backend": "metal",
+    "binary_version": null,
+    "id": "llama.cpp",
+    "revision": "4d19b287691e8f47fc303be420f630c40ec45684",
+    "threads_override": null
+  },
+  "schema_version": 1,
+  "started_at": "2026-08-26T14:01:37.093336Z",
+  "suite": {
+    "id": "quick-v1",
+    "schema_version": 1
+  },
+  "system_id": "macbook-m4"
+}

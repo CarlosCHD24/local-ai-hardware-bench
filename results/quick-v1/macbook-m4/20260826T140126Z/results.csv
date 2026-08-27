@@ -1,0 +1,10 @@
+system_id,suite_id,run_id,model_id,scenario_id,status,tokens_per_second_mean,tokens_per_second_stddev,peak_resident_memory_bytes,backend,n_threads,n_gpu_layers,error
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-1.5b-instruct-q4_k_m,pp512,ok,1164.784426,1.161532,1259143168,metal,4,99,
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-1.5b-instruct-q4_k_m,pp4096,ok,1022.366776,22.518658,1369178112,metal,4,99,
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-1.5b-instruct-q4_k_m,tg128,ok,88.936675,0.495921,1244659712,metal,4,99,
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-3b-instruct-q4_k_m,pp512,ok,524.108522,0.959968,2255044608,metal,4,99,
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-3b-instruct-q4_k_m,pp4096,ok,478.24592,0.122804,2392883200,metal,4,99,
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-3b-instruct-q4_k_m,tg128,ok,47.545243,0.070849,2234073088,metal,4,99,
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-7b-instruct-q4_k_m,pp512,ok,231.697524,0.245797,4835426304,metal,4,99,
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-7b-instruct-q4_k_m,pp4096,ok,219.186045,0.025104,5053874176,metal,4,99,
+macbook-m4,quick-v1,20260826T140126Z,qwen2.5-7b-instruct-q4_k_m,tg128,ok,22.038056,0.056108,4815929344,metal,4,99,

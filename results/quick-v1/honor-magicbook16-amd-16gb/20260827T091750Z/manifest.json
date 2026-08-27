@@ -1,0 +1,70 @@
+{
+  "model_manifest_id": "model-manifest-v1",
+  "models": [
+    {
+      "artifacts": [
+        {
+          "filename": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+          "sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+          "size_bytes": 1117320736
+        }
+      ],
+      "id": "qwen2.5-1.5b-instruct-q4_k_m",
+      "layers": null,
+      "parameters_billions": 1.54,
+      "primary_artifact": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+      "repository": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+      "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9"
+    }
+  ],
+  "schema_version": 1,
+  "suite": {
+    "$schema": "../schemas/suite.schema.json",
+    "description": "Suite breve y reproducible para comparar inferencia local con llama.cpp.",
+    "id": "quick-v1",
+    "memory_monitoring": {
+      "interval_ms": 1000,
+      "max_swap_growth_bytes": 8589934592,
+      "min_available_percent": 3
+    },
+    "model_manifest": "model-manifest-v1.json",
+    "model_time_budget_seconds": 300,
+    "models": [
+      "qwen2.5-1.5b-instruct-q4_k_m",
+      "qwen2.5-3b-instruct-q4_k_m",
+      "qwen2.5-7b-instruct-q4_k_m"
+    ],
+    "repetitions": 5,
+    "runtime": {
+      "binary": "llama-bench",
+      "gpu_layers": 99,
+      "id": "llama.cpp",
+      "repository": "https://github.com/ggml-org/llama.cpp.git",
+      "revision": "4d19b287691e8f47fc303be420f630c40ec45684"
+    },
+    "scenarios": [
+      {
+        "description": "Procesamiento de un prompt de 512 tokens.",
+        "generated_tokens": 0,
+        "id": "pp512",
+        "prompt_tokens": 512
+      },
+      {
+        "description": "Procesamiento de un prompt de 4096 tokens.",
+        "generated_tokens": 0,
+        "id": "pp4096",
+        "prompt_tokens": 4096
+      },
+      {
+        "description": "Generaci\u00f3n de 128 tokens sin medir el prefill.",
+        "generated_tokens": 128,
+        "id": "tg128",
+        "prompt_tokens": 0
+      }
+    ],
+    "schema_version": 1,
+    "timeout_seconds": 300,
+    "title": "Quick hardware benchmark v1",
+    "warmup_runs": 1
+  }
+}

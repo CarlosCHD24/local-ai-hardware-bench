@@ -1,0 +1,45 @@
+{
+  "accelerators": [
+    {
+      "cores": "10",
+      "kind": "gpu",
+      "metal_support": null,
+      "name": "Apple M4",
+      "vendor": "sppci_vendor_Apple"
+    }
+  ],
+  "collected_at": "2026-08-26T14:01:26.784483Z",
+  "cpu": {
+    "logical_cores": 10,
+    "model": "Apple M4",
+    "physical_cores": 10
+  },
+  "memory": {
+    "total_bytes": 17179869184,
+    "unified": true
+  },
+  "platform": {
+    "architecture": "arm64",
+    "build_version": "25B78",
+    "distribution": "macOS",
+    "os_version": "26.1",
+    "product_model": "Mac16,1",
+    "release": "25.1.0",
+    "system": "Darwin",
+    "version": "Darwin Kernel Version 25.1.0: Mon Oct 20 19:32:56 PDT 2025; root:xnu-12377.41.6~2/RELEASE_ARM64_T8132"
+  },
+  "power": {},
+  "schema_version": 1,
+  "software": {
+    "cmake": "cmake version 4.4.3\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+    "compiler": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin25.1.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin",
+    "configured_backend": "metal",
+    "llama_bench": null,
+    "llama_bench_path": "llama-bench",
+    "llama_cpp_revision": "4d19b287691e8f47fc303be420f630c40ec45684",
+    "metal": true,
+    "python": "3.9.6",
+    "xcode": "/Library/Developer/CommandLineTools"
+  },
+  "system_id": "macbook-m4"
+}

@@ -180,7 +180,49 @@ del mismo equipo se distinguen como `[cpu]` y `[vulkan]`.
 
 ## Resultados
 
-Cada ejecución genera:
+Los resultados publicados forman un historial acumulativo. Las cifras de una
+misma tabla comparten suite, modelos, cuantización y revisión de `llama.cpp`;
+el backend se muestra siempre para evitar comparar CPU, Metal, Vulkan y CUDA
+como si fueran la misma configuración.
+
+### Equipos probados
+
+| ID público | Hardware | Memoria | Sistema | Estado |
+|---|---|---:|---|---|
+| `macbook-m4` / `macbook-m4-16gb` | Apple M4, GPU integrada de 10 núcleos | 16 GiB unificados | macOS 26.1 | `quick-v1` y `capacity-v1` |
+| `honor-magicbook16-amd-16gb` | Ryzen 5 4600H, Radeon Renoir integrada | 15 GiB utilizables | Ubuntu 22.04.5 | `quick-v1` Vulkan, modelo 1.5B |
+| `desktop-ryzen7-5800x-32gb` | Ryzen 7 5800X, GeForce RTX 3060 12 GB | 31.3 GiB + 12 GB VRAM | Ubuntu 24.04.4 | `quick-v1` CPU, modelo 1.5B |
+
+El procesador del Honor se documenta como Ryzen 5 4600H porque es el modelo
+detectado por el propio sistema durante la prueba.
+
+### Historial `quick-v1`
+
+Rendimiento en tokens/s; un valor mayor es mejor. `pp` mide procesamiento de
+prompt y `tg` generación. Cada enlace abre el informe completo de esa ejecución.
+
+| Fecha UTC | Equipo | Backend | Modelo Q4_K_M | pp512 | pp4096 | tg128 | Informe |
+|---|---|---|---|---:|---:|---:|---|
+| 2026-08-26 | MacBook M4 | Metal | Qwen2.5 1.5B | 1164.78 | 1022.37 | 88.94 | [ver](results/quick-v1/macbook-m4/20260826T140126Z/report.md) |
+| 2026-08-26 | MacBook M4 | Metal | Qwen2.5 3B | 524.11 | 478.25 | 47.55 | [ver](results/quick-v1/macbook-m4/20260826T140126Z/report.md) |
+| 2026-08-26 | MacBook M4 | Metal | Qwen2.5 7B | 231.70 | 219.19 | 22.04 | [ver](results/quick-v1/macbook-m4/20260826T140126Z/report.md) |
+| 2026-08-27 | Honor MagicBook 16 | Vulkan | Qwen2.5 1.5B | 248.20 | 172.46 | 26.30 | [ver](results/quick-v1/honor-magicbook16-amd-16gb/20260827T091750Z/report.md) |
+| 2026-08-27 | Sobremesa Ryzen 7 5800X | CPU | Qwen2.5 1.5B | 274.35 | 226.61 | 29.09 | [ver](results/quick-v1/desktop-ryzen7-5800x-32gb/20260827T141123Z/report.md) |
+
+La RTX 3060 aparece en el inventario del sobremesa, pero no intervino en la
+última fila: el backend fue CPU y se registraron cero capas GPU. La campaña
+CUDA queda pendiente de instalar CUDA Toolkit/`nvcc`; hasta entonces no se
+publicará ningún resultado como rendimiento de la RTX 3060.
+
+### Historial `capacity-v1`
+
+| Fecha UTC | Equipo | Backend | Modelo / perfil | Resultado | Presión de memoria | Informe |
+|---|---|---|---|---|---|---|
+| 2026-08-26 | MacBook M4 16 GB | Metal | Qwen2.5 14B / `auto-fit` | tg32 11.35; pp512 120.38 tokens/s | Swap creció 2.3 GiB al inicio | [ver](results/capacity-v1/macbook-m4-16gb/20260826T150846Z/report.md) |
+| 2026-08-26 | MacBook M4 16 GB | Metal | Qwen2.5 14B / `full-accelerator` | tg32 11.54; pp512 117.85 tokens/s | Memoria comprimida, sin nuevo swap significativo | [ver](results/capacity-v1/macbook-m4-16gb/20260826T150846Z/report.md) |
+| 2026-08-26 | MacBook M4 16 GB | Metal | Qwen2.5 32B / `auto-fit` | Abortado por presión; pp512 omitido | Swap creció 8.6 GiB | [ver](results/capacity-v1/macbook-m4-16gb/20260826T153659Z/report.md) |
+
+Cada ejecución local genera:
 
 ```text
 results/quick-v1/<system-id>/<UTC-run-id>/
@@ -192,8 +234,11 @@ results/quick-v1/<system-id>/<UTC-run-id>/
 └── report.md
 ```
 
-Los resultados se ignoran por defecto. Antes de publicarlos, hay que añadirlos
-explícitamente a Git y revisar `system.json`.
+Los resultados se ignoran por defecto. Para el historial se publican
+`manifest.json`, `system.json`, `results.json`, `results.csv` y `report.md`
+después de validar y revisar su privacidad. `raw/` permanece local porque puede
+contener rutas del equipo y una gran cantidad de telemetría; no es necesario
+para consultar las cifras normalizadas.
 
 ## Comandos
 

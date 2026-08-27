@@ -1,0 +1,33 @@
+system_id,suite_id,run_id,model_id,profile_id,scenario_id,status,tokens_per_second_mean,tokens_per_second_stddev,peak_resident_memory_bytes,placement,pressure,swap_growth_bytes,compressed_growth_bytes,peak_device_memory_used_bytes,backend,n_threads,n_gpu_layers,error
+macbook-m4-16gb,capacity-v1,20260826T153659Z,qwen2.5-32b-instruct-q4_k_m,auto-fit,tg32,aborted_pressure,,,,unknown,aborted,9221890376,1729134592,,metal,,,"ed_reserve: reserving ...
+sched_reserve: max_nodes = 6168
+sched_reserve: reserving full memory module
+sched_reserve: worst-case: n_tokens = 32, n_seqs = 1, n_outputs = 1
+graph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1
+resolve_fused_ops: Flash Attention enabled
+resolve_fused_ops: resolving fused Gated Delta Net support:
+graph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1
+resolve_fused_ops: fused Gated Delta Net (autoregressive) enabled
+graph_reserve: reserving a graph for ubatch with n_tokens =   16, n_seqs =  1, n_outputs =   16
+resolve_fused_ops: fused Gated Delta Net (chunked) enabled
+resolve_fused_ops: resolving fused Lightning Indexer support:
+graph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1
+resolve_fused_ops: Lightning Indexer enabled
+resolve_fused_ops: resolving fused DeepSeek V4 HC support:
+graph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1
+resolve_fused_ops: fused DeepSeek V4 HC pre enabled
+graph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1
+resolve_fused_ops: fused DeepSeek V4 HC comb enabled
+graph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1
+resolve_fused_ops: fused DeepSeek V4 HC post enabled
+graph_reserve: reserving a graph for ubatch with n_tokens =   32, n_seqs =  1, n_outputs =   32
+graph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1
+graph_reserve: reserving a graph for ubatch with n_tokens =   32, n_seqs =  1, n_outputs =   32
+sched_reserve:       MTL0 compute buffer size =    25.83 MiB
+sched_reserve:        CPU compute buffer size =    12.64 MiB
+sched_reserve: graph nodes  = 2182
+sched_reserve: graph splits = 2
+sched_reserve: reserve took 105.34 ms, sched copies = 1
+attach_threadpool: call
+set_n_threads: n_threads = 4, n_threads_batch = 4"
+macbook-m4-16gb,capacity-v1,20260826T153659Z,qwen2.5-32b-instruct-q4_k_m,auto-fit,pp512,skipped,,,,,,,,,metal,,,Omitida tras fallo de memoria

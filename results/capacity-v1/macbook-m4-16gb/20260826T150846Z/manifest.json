@@ -1,0 +1,91 @@
+{
+  "model_manifest_id": "qwen2.5-capacity-q4_k_m-v1",
+  "models": [
+    {
+      "artifacts": [
+        {
+          "filename": "qwen2.5-14b-instruct-q4_k_m-00001-of-00003.gguf",
+          "sha256": "a09ea5e7b1eafb1b30b241726c3cc3c905c96f14ad41e246ffa5f44e53904f68",
+          "size_bytes": 3991999872
+        },
+        {
+          "filename": "qwen2.5-14b-instruct-q4_k_m-00002-of-00003.gguf",
+          "sha256": "21b9457d079680d284e90ef69607c4b2d8ef64a09d4729cb7b5e1357bdba41ae",
+          "size_bytes": 3989373504
+        },
+        {
+          "filename": "qwen2.5-14b-instruct-q4_k_m-00003-of-00003.gguf",
+          "sha256": "c8d37006760a387a35216e070e6664d7da927f10be8eb870fef2e3d4833d9976",
+          "size_bytes": 1006737120
+        }
+      ],
+      "id": "qwen2.5-14b-instruct-q4_k_m",
+      "layers": 48,
+      "parameters_billions": 14.7,
+      "primary_artifact": "qwen2.5-14b-instruct-q4_k_m-00001-of-00003.gguf",
+      "repository": "Qwen/Qwen2.5-14B-Instruct-GGUF",
+      "revision": "2b6a96d780143b4e8e3b970394e39e3774551f29"
+    }
+  ],
+  "schema_version": 1,
+  "suite": {
+    "$schema": "../schemas/suite.schema.json",
+    "cooldown_seconds": 5,
+    "description": "Explora el l\u00edmite de memoria con modelos grandes, offload autom\u00e1tico y aceleraci\u00f3n completa.",
+    "id": "capacity-v1",
+    "memory_monitoring": {
+      "interval_ms": 1000,
+      "max_swap_growth_bytes": 8589934592,
+      "min_available_percent": 3
+    },
+    "model_manifest": "model-manifest-capacity-v1.json",
+    "models": [
+      "qwen2.5-14b-instruct-q4_k_m",
+      "qwen2.5-32b-instruct-q4_k_m"
+    ],
+    "profiles": [
+      {
+        "description": "Ajusta la colocaci\u00f3n para conservar 1 GiB libre en el dispositivo.",
+        "fit_context": 4096,
+        "fit_target_mib": 1024,
+        "id": "auto-fit",
+        "load_mode": "mmap",
+        "verbose": true
+      },
+      {
+        "description": "Solicita todas las capas en el acelerador, aunque la carga pueda fallar.",
+        "gpu_layers": 99,
+        "id": "full-accelerator",
+        "load_mode": "mmap",
+        "verbose": true
+      }
+    ],
+    "repetitions": 3,
+    "runtime": {
+      "binary": "llama-bench",
+      "gpu_layers": 99,
+      "id": "llama.cpp",
+      "repository": "https://github.com/ggml-org/llama.cpp.git",
+      "revision": "4d19b287691e8f47fc303be420f630c40ec45684"
+    },
+    "scenarios": [
+      {
+        "description": "Generaci\u00f3n breve de 32 tokens para medir decode bajo presi\u00f3n de memoria.",
+        "generated_tokens": 32,
+        "id": "tg32",
+        "prompt_tokens": 0
+      },
+      {
+        "description": "Procesamiento de un prompt de 512 tokens.",
+        "generated_tokens": 0,
+        "id": "pp512",
+        "prompt_tokens": 512
+      }
+    ],
+    "schema_version": 1,
+    "skip_remaining_after_memory_failure": true,
+    "timeout_seconds": 1800,
+    "title": "Memory capacity benchmark v1",
+    "warmup_runs": 0
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "finished_at": "2026-08-26T15:38:08.879548Z",
+  "models": [
+    {
+      "artifacts": [
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00001-of-00005.gguf",
+          "sha256": "403434e5c845452c013661d586b97d5a53cf207462d180a07c301eafa9390d05",
+          "size_bytes": 3961498272
+        },
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00002-of-00005.gguf",
+          "sha256": "7371e5c5d717a8c20f526dbfce5d3f201dc3f02140d1c836314cd0756e02e8d7",
+          "size_bytes": 3948996064
+        },
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00003-of-00005.gguf",
+          "sha256": "f023ccc294c3bd3b2eac5b2dd40dea3aa4ca1d06c7460ead67c36386cd62e8fc",
+          "size_bytes": 3993478688
+        },
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00004-of-00005.gguf",
+          "sha256": "05fe76d941454390cd7aa0de3b342f83a1d1226a959479af85bbfae7cd93e771",
+          "size_bytes": 3950347744
+        },
+        {
+          "filename": "qwen2.5-32b-instruct-q4_k_m-00005-of-00005.gguf",
+          "sha256": "8c2e8ecc686129c37821bd9f3b3e251e6ae80deadd3d3348f7e3e84492a63c24",
+          "size_bytes": 3997015616
+        }
+      ],
+      "id": "qwen2.5-32b-instruct-q4_k_m",
+      "layers": 64,
+      "parameters_billions": 32.5,
+      "primary_artifact": "qwen2.5-32b-instruct-q4_k_m-00001-of-00005.gguf",
+      "repository": "Qwen/Qwen2.5-32B-Instruct-GGUF",
+      "revision": "a15e3cc10f8bbb2c0af6f8f1f34a32e3b060c09d"
+    }
+  ],
+  "results": [
+    {
+      "error": "ed_reserve: reserving ...\nsched_reserve: max_nodes = 6168\nsched_reserve: reserving full memory module\nsched_reserve: worst-case: n_tokens = 32, n_seqs = 1, n_outputs = 1\ngraph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1\nresolve_fused_ops: Flash Attention enabled\nresolve_fused_ops: resolving fused Gated Delta Net support:\ngraph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1\nresolve_fused_ops: fused Gated Delta Net (autoregressive) enabled\ngraph_reserve: reserving a graph for ubatch with n_tokens =   16, n_seqs =  1, n_outputs =   16\nresolve_fused_ops: fused Gated Delta Net (chunked) enabled\nresolve_fused_ops: resolving fused Lightning Indexer support:\ngraph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1\nresolve_fused_ops: Lightning Indexer enabled\nresolve_fused_ops: resolving fused DeepSeek V4 HC support:\ngraph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1\nresolve_fused_ops: fused DeepSeek V4 HC pre enabled\ngraph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1\nresolve_fused_ops: fused DeepSeek V4 HC comb enabled\ngraph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1\nresolve_fused_ops: fused DeepSeek V4 HC post enabled\ngraph_reserve: reserving a graph for ubatch with n_tokens =   32, n_seqs =  1, n_outputs =   32\ngraph_reserve: reserving a graph for ubatch with n_tokens =    1, n_seqs =  1, n_outputs =    1\ngraph_reserve: reserving a graph for ubatch with n_tokens =   32, n_seqs =  1, n_outputs =   32\nsched_reserve:       MTL0 compute buffer size =    25.83 MiB\nsched_reserve:        CPU compute buffer size =    12.64 MiB\nsched_reserve: graph nodes  = 2182\nsched_reserve: graph splits = 2\nsched_reserve: reserve took 105.34 ms, sched copies = 1\nattach_threadpool: call\nset_n_threads: n_threads = 4, n_threads_batch = 4",
+      "memory": {
+        "abort_reason": "swap_growth_exceeded:8675917824",
+        "available_percent_min": 4,
+        "compressed_before_bytes": 1650016256,
+        "compressed_growth_bytes": 1729134592,
+        "compressed_peak_bytes": 3379150848,
+        "device_memory_total_bytes": null,
+        "major_page_faults_delta": null,
+        "pageins_delta": 2235957,
+        "pageouts_delta": 1335,
+        "peak_device_memory_used_bytes": null,
+        "placement": "unknown",
+        "pressure": "aborted",
+        "sample_count": 44,
+        "sample_interval_ms": 1000,
+        "samples_file": "raw/qwen2.5-32b-instruct-q4_k_m--auto-fit--tg32.memory.json",
+        "swap_growth_bytes": 9221890376,
+        "swap_used_before_bytes": 2584614010,
+        "swap_used_peak_bytes": 11806504386,
+        "swapins_delta": 414160,
+        "swapouts_delta": 978900
+      },
+      "metrics": {},
+      "model_id": "qwen2.5-32b-instruct-q4_k_m",
+      "profile_id": "auto-fit",
+      "raw_file": "raw/qwen2.5-32b-instruct-q4_k_m--auto-fit--tg32.json",
+      "runtime_details": {},
+      "scenario_id": "tg32",
+      "status": "aborted_pressure"
+    },
+    {
+      "error": "Omitida tras fallo de memoria",
+      "metrics": {},
+      "model_id": "qwen2.5-32b-instruct-q4_k_m",
+      "profile_id": "auto-fit",
+      "raw_file": "raw/qwen2.5-32b-instruct-q4_k_m--auto-fit--pp512.json",
+      "runtime_details": {},
+      "scenario_id": "pp512",
+      "status": "skipped"
+    }
+  ],
+  "run_id": "20260826T153659Z",
+  "runtime": {
+    "backend": "metal",
+    "binary_version": "usage: llama-bench [options]",
+    "id": "llama.cpp",
+    "revision": "4d19b287691e8f47fc303be420f630c40ec45684",
+    "threads_override": null
+  },
+  "schema_version": 1,
+  "started_at": "2026-08-26T15:36:59.609093Z",
+  "suite": {
+    "id": "capacity-v1",
+    "schema_version": 1
+  },
+  "system_id": "macbook-m4-16gb"
+}

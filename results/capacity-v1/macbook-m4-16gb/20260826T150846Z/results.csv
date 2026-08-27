@@ -1,0 +1,5 @@
+system_id,suite_id,run_id,model_id,profile_id,scenario_id,status,tokens_per_second_mean,tokens_per_second_stddev,peak_resident_memory_bytes,placement,pressure,swap_growth_bytes,compressed_growth_bytes,peak_device_memory_used_bytes,backend,n_threads,n_gpu_layers,error
+macbook-m4-16gb,capacity-v1,20260826T150846Z,qwen2.5-14b-instruct-q4_k_m,auto-fit,tg32,ok,11.354811,0.161959,6366347264,unified_gpu,swapping,2436240506,1907425280,,"MTL,BLAS",4,-1,
+macbook-m4-16gb,capacity-v1,20260826T150846Z,qwen2.5-14b-instruct-q4_k_m,auto-fit,pp512,ok,120.379757,0.4863,9146155008,unified_gpu,swapping,156762112,24657920,,"MTL,BLAS",4,-1,
+macbook-m4-16gb,capacity-v1,20260826T150846Z,qwen2.5-14b-instruct-q4_k_m,full-accelerator,tg32,ok,11.539155,0.016791,9135374336,unified_gpu,normal,0,0,,"MTL,BLAS",4,99,
+macbook-m4-16gb,capacity-v1,20260826T150846Z,qwen2.5-14b-instruct-q4_k_m,full-accelerator,pp512,ok,117.848792,2.375588,9139929088,unified_gpu,compressed,0,277037056,,"MTL,BLAS",4,99,

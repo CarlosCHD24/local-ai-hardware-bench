@@ -1,0 +1,49 @@
+{
+  "accelerators": [
+    {
+      "driver": "595.84",
+      "kind": "gpu",
+      "memory_bytes": 12884901888,
+      "name": "NVIDIA GeForce RTX 3060",
+      "vendor": "NVIDIA"
+    },
+    {
+      "kind": "gpu",
+      "name": "NVIDIA Corporation GA104 [GeForce RTX 3060] (rev a1)",
+      "vendor": "AMD"
+    }
+  ],
+  "collected_at": "2026-08-27T14:11:23.768881Z",
+  "cpu": {
+    "logical_cores": 16,
+    "model": "AMD Ryzen 7 5800X 8-Core Processor",
+    "physical_cores": 8
+  },
+  "memory": {
+    "total_bytes": 33568886784
+  },
+  "platform": {
+    "architecture": "x86_64",
+    "distribution": "Ubuntu 24.04.4 LTS",
+    "distribution_id": "ubuntu",
+    "release": "7.0.0-28-generic",
+    "system": "Linux",
+    "version": "#28~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Jul  1 15:50:57 UTC 2"
+  },
+  "power": {
+    "cpu_governor": "powersave"
+  },
+  "schema_version": 1,
+  "software": {
+    "cmake": "cmake version 3.28.3\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+    "compiler": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+    "configured_backend": "cpu",
+    "cuda_compiler": null,
+    "llama_bench": "usage: llama-bench [options]",
+    "llama_bench_path": "llama-bench",
+    "llama_cpp_revision": "4d19b287691e8f47fc303be420f630c40ec45684",
+    "python": "3.12.3",
+    "vulkan": null
+  },
+  "system_id": "desktop-ryzen7-5800x-32gb"
+}
