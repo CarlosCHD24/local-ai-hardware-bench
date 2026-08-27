@@ -21,7 +21,7 @@ class ServingFilesTests(unittest.TestCase):
     def test_launcher_requires_authentication_and_disables_web_ui(self):
         launcher = (ROOT / "bin/local-ai-server").read_text()
         self.assertIn('--api-key-file "${api_key_file}"', launcher)
-        self.assertIn("--no-webui", launcher)
+        self.assertIn("--no-ui", launcher)
         self.assertIn("--flash-attn on", launcher)
         self.assertIn("--cache-type-k q8_0", launcher)
         self.assertIn("--cache-type-v q8_0", launcher)

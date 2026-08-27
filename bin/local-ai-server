@@ -53,5 +53,5 @@ exec "${server_binary}" \
   --jinja \
   --metrics \
   --api-key-file "${api_key_file}" \
-  --no-webui \
+  --no-ui \
   "$@"

@@ -28,7 +28,7 @@ Partiendo de un checkout ya preparado con el modelo 7B:
 ```bash
 ./bin/build-local-ai-server
 install -d -m 700 ~/.config/local-ai ~/.config/systemd/user
-openssl rand -hex 32 -out ~/.config/local-ai/api-keys
+openssl rand -hex -out ~/.config/local-ai/api-keys 32
 chmod 600 ~/.config/local-ai/api-keys
 install -m 600 deploy/server/desktop-rtx3060-12gb.env.example \
   ~/.config/local-ai/server.env
@@ -77,6 +77,9 @@ con OpenAI puede apuntar a:
 base_url = http://192.168.3.42:8080/v1
 model = local-agent
 ```
+
+Están disponibles tanto `/v1/chat/completions` como `/v1/responses`; este
+último facilita la integración con clientes modernos orientados a agentes.
 
 Ejemplo con `curl`:
 
