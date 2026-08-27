@@ -66,4 +66,19 @@ def executable_version(binary: Path) -> str | None:
     except (OSError, subprocess.TimeoutExpired):
         return None
     output = (completed.stdout + "\n" + completed.stderr).strip()
-    return output.splitlines()[0] if output else None
+    if not output:
+        return None
+
+    # Some development builds do not implement --version and print a usage
+    # line containing the absolute executable path instead. Results are meant
+    # to be public, so retain the useful first line without leaking a user's
+    # home directory.
+    first_line = output.splitlines()[0]
+    candidates = {str(binary)}
+    try:
+        candidates.add(str(binary.resolve()))
+    except OSError:
+        pass
+    for candidate in sorted(candidates, key=len, reverse=True):
+        first_line = first_line.replace(candidate, binary.name)
+    return first_line

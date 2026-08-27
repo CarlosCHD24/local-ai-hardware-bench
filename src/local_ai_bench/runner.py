@@ -124,6 +124,7 @@ def execute_suite(
                     reason = blocked_models.get(model["id"], "Omitida tras fallo de memoria")
                     record = _failure_record(model, scenario, raw_file, reason, "skipped")
                     record["profile_id"] = profile_id
+                    record["raw_file"] = str(raw_file.relative_to(run_dir))
                     result["results"].append(record)
                     result["finished_at"] = iso_now()
                     write_json(run_dir / "results.json", result)
