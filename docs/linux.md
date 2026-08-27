@@ -16,11 +16,11 @@ Las dos configuraciones Linux de referencia iniciales son:
 | Equipo | Ruta estable | Capacidad que se pretende observar |
 |---|---|---|
 | Sobremesa con GeForce RTX 3060 de 12 GB | CUDA | VRAM completa, offload híbrido y spill hacia RAM con CUDA Unified Memory |
-| Honor Pro 16 con Ryzen 5 5400H y 16 GB de RAM | CPU x86-64 | RAM disponible, page faults y swap al superar la memoria física |
+| Honor MagicBook 16 AMD con 16 GB de RAM | CPU y Vulkan/RADV | Rendimiento CPU, aceleración iGPU y presión sobre RAM compartida |
 
-La posible gráfica integrada Radeon del portátil no cambia la ruta estable:
-las comparaciones principales se hacen con CPU. Vulkan puede probarse aparte,
-pero debe etiquetarse como experimental y no mezclarse con los resultados CPU.
+HONOR documentó esta generación normalmente con Ryzen 5 5600H, aunque el
+modelo real debe confirmarse mediante `lscpu`. CPU continúa siendo la ruta
+estable; la Radeon integrada se mide como una segunda campaña Vulkan/UMA.
 
 ## Dependencias base
 
@@ -55,7 +55,7 @@ cd local-ai-hardware-bench
 También se puede descargar y descomprimir el archivo de fuentes de una release.
 Los comandos deben ejecutarse desde su directorio raíz.
 
-## Honor Pro 16: Ryzen 5 5400H y 16 GB
+## Honor MagicBook 16 AMD con 16 GB
 
 En este equipo se debe forzar CPU para que una instalación de Vulkan presente
 en el sistema no altere la serie comparable.
@@ -67,7 +67,7 @@ La primera prueba debe usar sólo el modelo de 1.5B:
 ./bin/local-ai-bench prepare --backend cpu --model qwen2.5-1.5b-instruct-q4_k_m
 ./bin/local-ai-bench run \
   --backend cpu \
-  --system-id honor-pro16-ryzen5400h-16gb \
+  --system-id honor-magicbook16-amd-16gb \
   --model qwen2.5-1.5b-instruct-q4_k_m
 ```
 
@@ -79,7 +79,7 @@ deben caber con holgura en 16 GB y sirven como medida de rendimiento CPU:
 
 ```bash
 ./bin/local-ai-bench run --backend cpu \
-  --system-id honor-pro16-ryzen5400h-16gb
+  --system-id honor-magicbook16-amd-16gb
 ```
 
 Para presión de memoria, `capacity-v1` selecciona automáticamente el perfil
@@ -89,7 +89,7 @@ Para presión de memoria, `capacity-v1` selecciona automáticamente el perfil
 ./bin/local-ai-bench --suite capacity-v1 prepare --backend cpu --yes \
   --model qwen2.5-14b-instruct-q4_k_m
 ./bin/local-ai-bench --suite capacity-v1 run --backend cpu \
-  --system-id honor-pro16-ryzen5400h-16gb \
+  --system-id honor-magicbook16-amd-16gb \
   --model qwen2.5-14b-instruct-q4_k_m
 ```
 
@@ -97,6 +97,61 @@ El modelo 32B ocupa más que los 16 GB físicos. Su fallo, timeout, caída de RA
 disponible, aumento de page faults o uso de swap son resultados de capacidad
 válidos. El proceso se detiene al alcanzar los límites de seguridad y nunca
 consume más de cinco minutos de presupuesto por modelo.
+
+## Radeon integrada: Vulkan/UMA experimental
+
+Primero identifica el hardware y el controlador:
+
+```bash
+lscpu | grep "Model name"
+lspci -nnk | grep -EA3 "VGA|Display"
+```
+
+En Ubuntu/Debian instala la implementación Mesa/RADV y las herramientas de
+compilación Vulkan:
+
+```bash
+sudo apt install -y mesa-vulkan-drivers vulkan-tools \
+  libvulkan-dev glslc spirv-headers
+vulkaninfo --summary
+./bin/linux-smoke vulkan
+```
+
+El diagnóstico debe mostrar una Radeon física con topología `unified`. Rechaza
+una instalación que sólo exponga `llvmpipe` o `lavapipe`, porque sería Vulkan
+software ejecutándose sobre CPU.
+
+Compila un runtime separado y empieza por 1.5B:
+
+```bash
+./bin/local-ai-bench prepare --backend vulkan \
+  --model qwen2.5-1.5b-instruct-q4_k_m
+./bin/local-ai-bench run --backend vulkan \
+  --system-id honor-magicbook16-amd-16gb \
+  --model qwen2.5-1.5b-instruct-q4_k_m
+```
+
+Los builds CPU y Vulkan se guardan en directorios distintos. La detección
+`auto` continúa eligiendo CPU en este portátil deliberadamente; Vulkan siempre
+debe solicitarse con `--backend vulkan` para no mezclar campañas.
+
+Si 1.5B termina y el resultado informa backend Vulkan y capas GPU, continúa con
+3B y 7B. Para capacidad, prepara 14B antes de considerar 32B:
+
+```bash
+./bin/local-ai-bench --suite capacity-v1 prepare --backend vulkan --yes \
+  --model qwen2.5-14b-instruct-q4_k_m
+./bin/local-ai-bench --suite capacity-v1 run --backend vulkan \
+  --system-id honor-magicbook16-amd-16gb \
+  --model qwen2.5-14b-instruct-q4_k_m
+```
+
+En una APU no existe un depósito de VRAM independiente comparable con la RTX
+3060. `VRAM` en `amdgpu` representa principalmente el carveout reservado y GTT
+representa RAM del sistema accesible por la GPU. El informe etiqueta la
+topología como `unified` y el modo como `shared_memory_pressure`, nunca como
+spill de VRAM hacia RAM. Las cifras AMD son globales para el dispositivo, no
+atribuibles exclusivamente al proceso.
 
 ## Sobremesa: GeForce RTX 3060 de 12 GB
 
@@ -155,17 +210,18 @@ contexto y los buffers. El modelo 32B fuerza una colocación híbrida o Unified
 Memory y debe ejecutarse sólo después de validar 14B. Ambos conservan el límite
 de cinco minutos por modelo.
 
-## Vulkan experimental
+## Vulkan genérico
 
 En Debian/Ubuntu suelen ser necesarios:
 
 ```bash
-sudo apt install -y libvulkan-dev vulkan-tools glslc
+sudo apt install -y libvulkan-dev vulkan-tools glslc spirv-headers
 ./bin/local-ai-bench doctor --backend vulkan
 ```
 
-Se ejecuta con `--backend vulkan`. Esta ruta no ofrece todavía atribución de
-VRAM para AMD/Intel y no forma parte de la matriz estable de `quick-v1`.
+Se ejecuta con `--backend vulkan`. En AMD/Linux se muestrean las métricas
+globales de `amdgpu`; no hay atribución por proceso y la telemetría equivalente
+para Intel queda pendiente.
 
 ## Datos y resultados
 
@@ -189,8 +245,10 @@ Revisa siempre `system.json` y los archivos `raw/*.stderr.txt` por privacidad.
 
 - Si `auto` selecciona CPU en un equipo NVIDIA, comprueba `nvcc --version` y
   `nvidia-smi`.
-- En el Honor Pro 16 usa explícitamente `--backend cpu`; Vulkan es una campaña
-  distinta.
+- En el Honor MagicBook 16 usa explícitamente `--backend cpu`; Vulkan es una
+  campaña distinta.
+- Si Vulkan informa `llvmpipe` o `lavapipe`, instala o corrige Mesa/RADV; esa
+  salida no representa la Radeon integrada.
 - Si falla CMake, conserva su salida completa; el proyecto muestra el código de
   error pero el diagnóstico concreto procede de CMake o del compilador.
 - Si el modelo no cabe, `capacity-v1` corta a los cinco minutos por modelo y

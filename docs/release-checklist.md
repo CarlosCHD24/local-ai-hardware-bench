@@ -37,6 +37,19 @@
 - [ ] El informe registra RAM disponible, RSS del proceso, swap y page faults.
 - [ ] Ningún modelo excede el presupuesto total de cinco minutos.
 
+## Linux AMD APU/Vulkan
+
+- [ ] `lspci` identifica la Radeon integrada con el controlador `amdgpu`.
+- [ ] `vulkaninfo --summary` muestra RADV y no `llvmpipe`/`lavapipe`.
+- [ ] `./bin/linux-smoke vulkan` termina correctamente.
+- [ ] El runtime Vulkan se compila separado del runtime CPU.
+- [ ] GitHub Actions compila el runtime Vulkan fijado en Ubuntu 24.04.
+- [ ] Qwen2.5 1.5B informa backend Vulkan, capas GPU y `uma: 1`.
+- [ ] `capacity-v1` registra VRAM, GTT, actividad y RAM disponible.
+- [ ] La colocación es `unified_gpu`/`unified_hybrid` y el spill mode es
+  `shared_memory_pressure`.
+- [ ] Se comparan CPU y Vulkan mostrando el backend en la cabecera.
+
 ## Privacidad y publicación
 
 - [ ] Se revisan `system.json`, `manifest.json` y `raw/*.stderr.txt`.

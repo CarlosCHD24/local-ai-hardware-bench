@@ -33,6 +33,7 @@ def render_report(data: dict[str, Any]) -> str:
         f"- Backend configurado: `{results['runtime'].get('backend', 'unknown')}`",
         f"- CPU: {system.get('cpu', {}).get('model', 'unknown')}",
         f"- Memoria: {_format_bytes(system.get('memory', {}).get('total_bytes'))}",
+        f"- Acelerador: {_accelerator_summary(system.get('accelerators', []))}",
         f"- Inicio: {results['started_at']}",
         f"- Fin: {results['finished_at']}",
         "",
@@ -40,8 +41,8 @@ def render_report(data: dict[str, Any]) -> str:
     if has_memory:
         lines.extend(
             [
-                "| Modelo | Perfil | Escenario | Estado | tokens/s | Pico RSS | RAM proceso | Swap proceso | VRAM proceso | RAM disponible Δ | Swap base | Swap pico | Swap Δ | Compresión Δ | Colocación | Presión | CUDA UM | Capas GPU |",
-                "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|---:|",
+                "| Modelo | Perfil | Escenario | Estado | tokens/s | Pico RSS | RAM proceso | Swap proceso | VRAM proceso | AMD VRAM Δ | AMD GTT Δ | GPU AMD máx. | RAM disponible Δ | Swap base | Swap pico | Swap Δ | Compresión Δ | Colocación | Topología | Spill | Presión | CUDA UM | Capas GPU |",
+                "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|---|---|---:|",
             ]
         )
     else:
@@ -58,7 +59,7 @@ def render_report(data: dict[str, Any]) -> str:
         if has_memory:
             memory = record.get("memory", {})
             lines.append(
-                "| {model} | {profile} | {scenario} | {status} | {mean} | {rss} | {process_rss} | {process_swap} | {process_vram} | {available_drop} | {swap_before} | {swap_peak} | {swap} | {compressed} | {placement} | {pressure} | {cuda_um} | {layers} |".format(
+                "| {model} | {profile} | {scenario} | {status} | {mean} | {rss} | {process_rss} | {process_swap} | {process_vram} | {amd_vram} | {amd_gtt} | {amd_busy} | {available_drop} | {swap_before} | {swap_peak} | {swap} | {compressed} | {placement} | {topology} | {spill} | {pressure} | {cuda_um} | {layers} |".format(
                     model=record["model_id"],
                     profile=record.get("profile_id", "default"),
                     scenario=record["scenario_id"],
@@ -68,12 +69,17 @@ def render_report(data: dict[str, Any]) -> str:
                     process_rss=_format_bytes(memory.get("peak_process_rss_bytes")),
                     process_swap=_format_bytes(memory.get("peak_process_swap_bytes")),
                     process_vram=_format_bytes(memory.get("peak_process_device_memory_used_bytes")),
+                    amd_vram=_format_bytes(memory.get("amdgpu_vram_growth_bytes")),
+                    amd_gtt=_format_bytes(memory.get("amdgpu_gtt_growth_bytes")),
+                    amd_busy=_format_percent(memory.get("peak_amdgpu_gpu_busy_percent")),
                     available_drop=_format_bytes(memory.get("available_memory_drop_bytes")),
                     swap_before=_format_bytes(memory.get("swap_used_before_bytes")),
                     swap_peak=_format_bytes(memory.get("swap_used_peak_bytes")),
                     swap=_format_bytes(memory.get("swap_growth_bytes")),
                     compressed=_format_bytes(memory.get("compressed_growth_bytes")),
                     placement=memory.get("placement", "—"),
+                    topology=memory.get("memory_architecture", "—"),
+                    spill=memory.get("spill_mode", "—"),
                     pressure=memory.get("pressure", "—"),
                     cuda_um=_format_bool(memory.get("cuda_unified_memory_enabled")),
                     layers=details.get("offloaded_layers", details.get("n_gpu_layers", "—")),
@@ -134,6 +140,17 @@ def render_csv(results: dict[str, Any]) -> str:
         "peak_process_swap_bytes",
         "peak_process_device_memory_used_bytes",
         "available_memory_drop_bytes",
+        "memory_architecture",
+        "spill_mode",
+        "amdgpu_vram_used_before_bytes",
+        "peak_amdgpu_vram_used_bytes",
+        "amdgpu_vram_growth_bytes",
+        "amdgpu_vram_total_bytes",
+        "amdgpu_gtt_used_before_bytes",
+        "peak_amdgpu_gtt_used_bytes",
+        "amdgpu_gtt_growth_bytes",
+        "amdgpu_gtt_total_bytes",
+        "peak_amdgpu_gpu_busy_percent",
         "cuda_unified_memory_enabled",
         "backend",
         "n_threads",
@@ -170,6 +187,17 @@ def render_csv(results: dict[str, Any]) -> str:
                     "peak_process_device_memory_used_bytes"
                 ),
                 "available_memory_drop_bytes": memory.get("available_memory_drop_bytes"),
+                "memory_architecture": memory.get("memory_architecture"),
+                "spill_mode": memory.get("spill_mode"),
+                "amdgpu_vram_used_before_bytes": memory.get("amdgpu_vram_used_before_bytes"),
+                "peak_amdgpu_vram_used_bytes": memory.get("peak_amdgpu_vram_used_bytes"),
+                "amdgpu_vram_growth_bytes": memory.get("amdgpu_vram_growth_bytes"),
+                "amdgpu_vram_total_bytes": memory.get("amdgpu_vram_total_bytes"),
+                "amdgpu_gtt_used_before_bytes": memory.get("amdgpu_gtt_used_before_bytes"),
+                "peak_amdgpu_gtt_used_bytes": memory.get("peak_amdgpu_gtt_used_bytes"),
+                "amdgpu_gtt_growth_bytes": memory.get("amdgpu_gtt_growth_bytes"),
+                "amdgpu_gtt_total_bytes": memory.get("amdgpu_gtt_total_bytes"),
+                "peak_amdgpu_gpu_busy_percent": memory.get("peak_amdgpu_gpu_busy_percent"),
                 "cuda_unified_memory_enabled": memory.get("cuda_unified_memory_enabled"),
                 "backend": backend,
                 "n_threads": details.get("n_threads"),
@@ -192,10 +220,22 @@ def compare_runs(run_dirs: list[Path]) -> str:
     if any(fingerprint != model_sets[0] for fingerprint in model_sets[1:]):
         raise ResultValidationError("Los artefactos o revisiones de modelos no coinciden")
 
-    systems = [data["system_id"] for data in datasets]
+    systems = [
+        f"{data['system_id']} [{data.get('runtime', {}).get('backend', 'unknown')}]"
+        for data in datasets
+    ]
     keys: list[tuple[str, str, str]] = []
-    for record in datasets[0]["results"]:
-        keys.append((record["model_id"], record.get("profile_id", "default"), record["scenario_id"]))
+    seen_keys: set[tuple[str, str, str]] = set()
+    for data in datasets:
+        for record in data["results"]:
+            key = (
+                record["model_id"],
+                record.get("profile_id", "default"),
+                record["scenario_id"],
+            )
+            if key not in seen_keys:
+                keys.append(key)
+                seen_keys.add(key)
     indexes = [
         {
             (record["model_id"], record.get("profile_id", "default"), record["scenario_id"]): record
@@ -224,6 +264,23 @@ def compare_runs(run_dirs: list[Path]) -> str:
 
 def _format_number(value: Any) -> str:
     return f"{value:.2f}" if isinstance(value, (int, float)) else "—"
+
+
+def _format_percent(value: Any) -> str:
+    return f"{value:.0f} %" if isinstance(value, (int, float)) else "—"
+
+
+def _accelerator_summary(accelerators: Any) -> str:
+    if not isinstance(accelerators, list) or not accelerators:
+        return "no detectado"
+    summaries = []
+    for accelerator in accelerators:
+        if not isinstance(accelerator, dict):
+            continue
+        name = accelerator.get("vulkan_name") or accelerator.get("name") or "desconocido"
+        topology = accelerator.get("memory_architecture")
+        summaries.append(f"{name} ({topology})" if topology else str(name))
+    return ", ".join(summaries) or "no detectado"
 
 
 def _format_bytes(value: Any) -> str:

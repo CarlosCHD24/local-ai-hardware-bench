@@ -34,6 +34,8 @@ proceso. Se conserva la serie temporal completa y un resumen normalizado.
   swap-ins/swap-outs.
 - Linux: `MemAvailable`, swap y contadores de `/proc/vmstat`.
 - NVIDIA: además se consulta VRAM usada y total mediante `nvidia-smi`.
+- AMD/Linux: se leen desde `sysfs` VRAM reservada, GTT y porcentaje de actividad
+  globales publicados por `amdgpu`.
 - Linux atribuye al grupo de procesos su pico de RSS, swap y, cuando el driver
   lo informa, memoria CUDA. La VRAM global se conserva por separado.
 - Todas las plataformas: pico RSS mediante `/usr/bin/time` y buffers/capas
@@ -54,6 +56,12 @@ CUDA y `nvidia-smi` no ofrecen en esta ruta una cifra directa y portable de
 (VRAM del proceso, RSS, swap del proceso y caída de RAM disponible) y marca si
 CUDA UM estaba activado, sin presentar una estimación indirecta como medida
 exacta de *spill*.
+
+En una APU Vulkan con `uma: 1`, VRAM y GTT terminan respaldadas por la memoria
+compartida del sistema. El informe usa `memory_architecture=unified`, colocación
+`unified_gpu` o `unified_hybrid` y `spill_mode=shared_memory_pressure`. No suma
+VRAM y GTT como si fueran capacidad adicional ni llama *spill* al crecimiento
+de GTT. Estas métricas son globales y pueden incluir otras aplicaciones.
 
 ## Clasificación
 

@@ -95,6 +95,26 @@ class ReportTests(unittest.TestCase):
             self.assertIn("| metal |", report.read_text(encoding="utf-8"))
             self.assertIn(",metal,", csv_path.read_text(encoding="utf-8"))
 
+    def test_compare_distinguishes_backends_and_unions_profiles(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            cpu = make_run(root / "cpu", "same-system", 20.0)
+            vulkan = make_run(root / "vulkan", "same-system", 30.0)
+            cpu_data = json.loads((cpu / "results.json").read_text(encoding="utf-8"))
+            cpu_data["results"][0]["profile_id"] = "cpu-resident"
+            write_json(cpu / "results.json", cpu_data)
+            vulkan_data = json.loads((vulkan / "results.json").read_text(encoding="utf-8"))
+            vulkan_data["runtime"]["backend"] = "vulkan"
+            vulkan_data["results"][0]["profile_id"] = "auto-fit"
+            write_json(vulkan / "results.json", vulkan_data)
+
+            comparison = compare_runs([cpu, vulkan])
+
+            self.assertIn("same-system [cpu]", comparison)
+            self.assertIn("same-system [vulkan]", comparison)
+            self.assertIn("cpu-resident", comparison)
+            self.assertIn("auto-fit", comparison)
+
     def test_report_includes_linux_process_memory_and_cuda_spill_mode(self) -> None:
         with TemporaryDirectory() as directory:
             run = make_run(Path(directory), "linux-nvidia", 10.0)
@@ -119,6 +139,40 @@ class ReportTests(unittest.TestCase):
             self.assertIn("| sí |", report_text)
             self.assertIn("peak_process_device_memory_used_bytes", csv_text)
             self.assertIn("cuda_unified_memory_enabled", csv_text)
+
+    def test_report_includes_amdgpu_unified_memory_metrics(self) -> None:
+        with TemporaryDirectory() as directory:
+            run = make_run(Path(directory), "linux-amd-apu", 8.0)
+            system = json.loads((run / "system.json").read_text(encoding="utf-8"))
+            system["accelerators"] = [
+                {
+                    "name": "AMD Radeon Graphics",
+                    "vulkan_name": "AMD Radeon Graphics (RADV RENOIR)",
+                    "memory_architecture": "unified",
+                }
+            ]
+            write_json(run / "system.json", system)
+            data = json.loads((run / "results.json").read_text(encoding="utf-8"))
+            data["runtime"]["backend"] = "vulkan"
+            data["results"][0]["memory"] = {
+                "amdgpu_vram_growth_bytes": 64 * 1024**2,
+                "amdgpu_gtt_growth_bytes": 1024**3,
+                "peak_amdgpu_gpu_busy_percent": 92,
+                "memory_architecture": "unified",
+                "spill_mode": "shared_memory_pressure",
+                "placement": "unified_gpu",
+                "pressure": "normal",
+            }
+            write_json(run / "results.json", data)
+
+            report, csv_path = write_report(run)
+            report_text = report.read_text(encoding="utf-8")
+            csv_text = csv_path.read_text(encoding="utf-8")
+
+            self.assertIn("AMD Radeon Graphics (RADV RENOIR) (unified)", report_text)
+            self.assertIn("shared_memory_pressure", report_text)
+            self.assertIn("92 %", report_text)
+            self.assertIn("amdgpu_gtt_growth_bytes", csv_text)
 
 
 if __name__ == "__main__":

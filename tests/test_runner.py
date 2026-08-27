@@ -10,6 +10,8 @@ from unittest.mock import patch
 from local_ai_bench.config import load_config
 from local_ai_bench.models import update_verify_cache
 from local_ai_bench.runner import (
+    _finish_memory_record,
+    _failure_status,
     _parse_runtime_placement,
     _remaining_timeout,
     _success_record,
@@ -20,6 +22,12 @@ from local_ai_bench.validate import validate_result_dir
 
 
 class RunnerIntegrationTests(unittest.TestCase):
+    def test_classifies_vulkan_allocation_failure_as_oom(self) -> None:
+        self.assertEqual(
+            _failure_status(1, "vkAllocateMemory: VK_ERROR_OUT_OF_DEVICE_MEMORY", {}),
+            "oom",
+        )
+
     @patch("local_ai_bench.runner.time.monotonic", return_value=125.0)
     def test_remaining_timeout_shares_model_budget(self, monotonic) -> None:
         self.assertEqual(_remaining_timeout(300, 200.0), 75.0)
@@ -28,6 +36,7 @@ class RunnerIntegrationTests(unittest.TestCase):
 
     def test_parses_actual_offload_and_buffer_placement(self) -> None:
         details = _parse_runtime_placement(
+            "ggml_vulkan: 0 = AMD Radeon Graphics (RADV RENOIR) | uma: 1 | fp16: 1\n"
             "llama_model_load: offloaded 40/49 layers to GPU\n"
             "llama_model_load: MTL0_Mapped model buffer size = 8192.00 MiB\n"
             "llama_model_load: CPU_Mapped model buffer size = 512.00 MiB\n"
@@ -36,6 +45,24 @@ class RunnerIntegrationTests(unittest.TestCase):
         self.assertEqual(details["total_layers"], 49)
         self.assertEqual(details["device_model_bytes"], 8192 * 1024 * 1024)
         self.assertEqual(details["host_model_bytes"], 512 * 1024 * 1024)
+        self.assertEqual(details["memory_architecture"], "unified")
+
+    def test_classifies_full_vulkan_uma_as_shared_memory(self) -> None:
+        memory = {}
+        record = {
+            "status": "ok",
+            "runtime_details": {
+                "offloaded_layers": 49,
+                "total_layers": 49,
+                "memory_architecture": "unified",
+            },
+        }
+
+        _finish_memory_record(memory, record, "vulkan", {"layers": 49})
+
+        self.assertEqual(memory["placement"], "unified_gpu")
+        self.assertEqual(memory["memory_architecture"], "unified")
+        self.assertEqual(memory["spill_mode"], "shared_memory_pressure")
 
     def test_normalizes_plural_llama_cpp_backends_field(self) -> None:
         record = _success_record(

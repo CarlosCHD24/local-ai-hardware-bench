@@ -86,6 +86,85 @@ def _pci_accelerators() -> list[dict[str, Any]]:
     return devices
 
 
+def vulkan_devices(summary: str | None = None) -> list[dict[str, Any]]:
+    output = summary if summary is not None else command_output(["vulkaninfo", "--summary"])
+    if not output:
+        return []
+    devices: list[dict[str, Any]] = []
+    blocks = re.split(r"(?m)^\s*GPU\d+:\s*$", output)[1:]
+    for block in blocks:
+        fields = {
+            key: value.strip()
+            for key, value in re.findall(
+                r"(?m)^\s*(deviceName|deviceType|driverName|driverInfo)\s*=\s*(.+?)\s*$",
+                block,
+            )
+        }
+        name = fields.get("deviceName")
+        if not name:
+            continue
+        device_type = fields.get("deviceType", "unknown").lower()
+        device_type = device_type.removeprefix("physical_device_type_")
+        lower = " ".join(
+            (name, fields.get("driverName", ""), fields.get("driverInfo", ""))
+        ).lower()
+        software = device_type == "cpu" or any(
+            marker in lower for marker in ("llvmpipe", "lavapipe", "software rasterizer")
+        )
+        if "amd" in lower or "radeon" in lower or "radv" in lower:
+            vendor = "AMD"
+        elif "nvidia" in lower:
+            vendor = "NVIDIA"
+        elif "intel" in lower:
+            vendor = "Intel"
+        else:
+            vendor = "unknown"
+        integrated = device_type == "integrated_gpu"
+        devices.append(
+            {
+                "name": name,
+                "vendor": vendor,
+                "device_type": device_type,
+                "driver": fields.get("driverName"),
+                "driver_info": fields.get("driverInfo"),
+                "software": software,
+                "memory_architecture": "unified" if integrated else "dedicated",
+            }
+        )
+    return devices
+
+
+def _enrich_accelerators_with_vulkan(
+    accelerators: list[dict[str, Any]], devices: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    hardware_devices = [device for device in devices if not device["software"]]
+    matched_accelerators: set[int] = set()
+    for device in hardware_devices:
+        match_index = next(
+            (
+                index
+                for index, accelerator in enumerate(accelerators)
+                if index not in matched_accelerators
+                and accelerator.get("vendor") == device["vendor"]
+            ),
+            None,
+        )
+        metadata = {
+            "vulkan_name": device["name"],
+            "vulkan_device_type": device["device_type"],
+            "vulkan_driver": device.get("driver"),
+            "memory_architecture": device["memory_architecture"],
+        }
+        if match_index is not None:
+            accelerators[match_index].update(metadata)
+            matched_accelerators.add(match_index)
+        else:
+            accelerators.append(
+                {"kind": "gpu", "vendor": device["vendor"], "name": device["name"], **metadata}
+            )
+    return accelerators
+
+
 def collect(system_id: str) -> dict[str, Any]:
     data = base_system(system_id)
     release = _os_release()
@@ -102,14 +181,18 @@ def collect(system_id: str) -> dict[str, Any]:
         data["cpu"]["physical_cores"] = len(cores)
     data["memory"]["total_bytes"] = _memory_bytes()
 
+    vulkan_summary = command_output(["vulkaninfo", "--summary"])
+    vulkan = vulkan_devices(vulkan_summary)
     nvidia = _nvidia_gpus()
-    data["accelerators"] = nvidia or _pci_accelerators()
+    pci = _pci_accelerators()
+    accelerators = nvidia + [device for device in pci if device["vendor"] != "NVIDIA"]
+    data["accelerators"] = _enrich_accelerators_with_vulkan(accelerators or pci, vulkan)
     data["software"].update(
         {
             "cmake": command_output(["cmake", "--version"]),
             "compiler": command_output(["c++", "--version"]),
             "cuda_compiler": command_output(["nvcc", "--version"]),
-            "vulkan": command_output(["vulkaninfo", "--summary"]),
+            "vulkan": vulkan_summary,
         }
     )
     governor_path = Path("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")

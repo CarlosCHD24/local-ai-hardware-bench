@@ -39,3 +39,18 @@ jobs:
         run: ./bin/local-ai-bench prepare --backend cpu --skip-models --jobs 2
       - name: Verify compiled runtime
         run: ./bin/local-ai-bench doctor --backend cpu
+
+  linux-vulkan-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install Vulkan build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libvulkan-dev glslc spirv-headers
+      - name: Compile pinned llama.cpp Vulkan runtime
+        run: ./bin/local-ai-bench prepare --backend vulkan --skip-models --jobs 2
+      - name: Verify compiled Vulkan binary
+        run: test -x .local-ai-bench/runtimes/llama.cpp/build-vulkan/bin/llama-bench

@@ -67,15 +67,34 @@ def doctor_checks(backend: str = "auto", runtime_binary: Path | None = None) -> 
         if selected == "metal":
             checks.append({"name": "xcode", "ok": shutil.which("xcode-select") is not None, "value": shutil.which("xcode-select")})
         if selected == "vulkan":
-            checks.extend(
-                [
-                    {
-                        "name": "vulkaninfo",
-                        "ok": shutil.which("vulkaninfo") is not None,
-                        "value": shutil.which("vulkaninfo"),
-                    },
-                    {"name": "glslc", "ok": shutil.which("glslc") is not None, "value": shutil.which("glslc")},
-                ]
+            checks.append(
+                {"name": "glslc", "ok": shutil.which("glslc") is not None, "value": shutil.which("glslc")}
             )
+    if selected == "vulkan":
+        vulkaninfo = shutil.which("vulkaninfo")
+        devices = linux.vulkan_devices() if vulkaninfo else []
+        hardware_devices = [device for device in devices if not device["software"]]
+        if hardware_devices:
+            hardware_value = ", ".join(
+                f"{device['name']} ({device['driver'] or 'driver desconocido'}, "
+                f"{device['memory_architecture']})"
+                for device in hardware_devices
+            )
+        elif devices:
+            hardware_value = "sólo dispositivos Vulkan software: " + ", ".join(
+                device["name"] for device in devices
+            )
+        else:
+            hardware_value = "no detectado"
+        checks.extend(
+            [
+                {"name": "vulkaninfo", "ok": vulkaninfo is not None, "value": vulkaninfo},
+                {
+                    "name": "vulkan_hardware_device",
+                    "ok": bool(hardware_devices),
+                    "value": hardware_value,
+                },
+            ]
+        )
     checks.append({"name": "selected_backend", "ok": True, "value": selected})
     return checks

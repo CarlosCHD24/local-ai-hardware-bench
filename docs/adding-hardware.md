@@ -12,6 +12,9 @@ backends existentes:
 
 Para Linux, sigue primero [`linux.md`](linux.md). Antes de declarar un backend
 como probado para una release, completa [`release-checklist.md`](release-checklist.md).
+Una GPU integrada debe conservar el mismo `system-id` que la ejecución CPU; el
+backend y la topología de memoria ya se registran por separado. No declares
+Vulkan válido si `doctor` sólo encuentra `llvmpipe` o `lavapipe`.
 
 Para soportar otro sistema operativo, hay que implementar un colector en
 `src/local_ai_bench/system/`. El colector debe devolver el esquema común y no

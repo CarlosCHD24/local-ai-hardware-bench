@@ -177,6 +177,9 @@ def execute_suite(
                     if completed.returncode != 0 and parsed is None:
                         status = _failure_status(completed.returncode, completed.stderr, memory_summary)
                         record = _failure_record(model, scenario, raw_file, completed.stderr, status)
+                        record["runtime_details"].update(
+                            _parse_runtime_placement(completed.stderr)
+                        )
                     elif parsed is None:
                         raise parse_error or ValueError("Salida no válida de llama-bench")
                     else:
@@ -205,6 +208,7 @@ def execute_suite(
                         f"Timeout tras {scenario_timeout:.1f}s",
                         "timeout",
                     )
+                    record["runtime_details"].update(_parse_runtime_placement(stderr))
                     memory_summary = getattr(exc, "memory_summary", {})
                     memory_samples = getattr(exc, "memory_samples", [])
                     if monitoring and memory_summary:
@@ -357,7 +361,11 @@ def _failure_record(
 def _failure_status(returncode: int, stderr: str, memory: dict[str, Any]) -> str:
     if memory.get("abort_reason"):
         return "aborted_pressure"
-    oom_pattern = r"out of memory|failed to allocate|cannot allocate memory|insufficient memory|cuda.*alloc.*failed"
+    oom_pattern = (
+        r"out of memory|out of (?:device|host) memory|failed to allocate|"
+        r"cannot allocate memory|insufficient memory|cuda.*alloc.*failed|"
+        r"vk_error_out_of_(?:device|host)_memory|vulkan.*alloc.*fail"
+    )
     if returncode in {-9, 137} or re.search(oom_pattern, stderr, re.IGNORECASE):
         return "oom"
     return "failed"
@@ -385,23 +393,47 @@ def _finish_memory_record(
             memory[key] = details[key]
     gpu_layers = details.get("offloaded_layers", details.get("n_gpu_layers"))
     total_layers = details.get("total_layers") or model.get("layers")
+    memory_architecture = details.get("memory_architecture")
+    if backend == "metal":
+        memory_architecture = "unified"
+    elif backend == "cuda":
+        memory_architecture = "dedicated"
     if not isinstance(gpu_layers, int) or gpu_layers <= 0:
         placement = "cpu" if record["status"] == "ok" else "unknown"
     elif isinstance(total_layers, int) and gpu_layers < total_layers:
-        placement = "hybrid"
-    elif backend == "metal":
+        placement = "unified_hybrid" if memory_architecture == "unified" else "hybrid"
+    elif memory_architecture == "unified":
         placement = "unified_gpu"
     else:
         placement = "gpu_full"
     memory["placement"] = placement
+    memory["memory_architecture"] = memory_architecture or (
+        "host" if backend == "cpu" else "unknown"
+    )
     memory["cuda_unified_memory_enabled"] = bool(
         backend == "cuda" and (profile or {}).get("cuda_unified_memory")
     )
+    if memory["cuda_unified_memory_enabled"]:
+        memory["spill_mode"] = "device_to_host"
+    elif memory["memory_architecture"] == "unified":
+        memory["spill_mode"] = "shared_memory_pressure"
+    else:
+        memory["spill_mode"] = "none"
     memory["pressure"] = classify_pressure(memory, record["status"])
 
 
 def _parse_runtime_placement(stderr: str) -> dict[str, Any]:
     details: dict[str, Any] = {}
+    vulkan_matches = re.findall(
+        r"ggml_vulkan:\s*(?:\d+\s*=\s*)?(.+?)\s*\|\s*uma:\s*([01])\b",
+        stderr,
+        re.IGNORECASE,
+    )
+    if vulkan_matches:
+        details["accelerator_name"] = vulkan_matches[-1][0].strip()
+        details["memory_architecture"] = (
+            "unified" if vulkan_matches[-1][1] == "1" else "dedicated"
+        )
     offload_matches = re.findall(r"offloaded\s+(\d+)/(\d+)\s+layers to GPU", stderr)
     if offload_matches:
         details["offloaded_layers"] = int(offload_matches[-1][0])

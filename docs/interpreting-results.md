@@ -35,7 +35,8 @@ completarse bajo el protocolo.
 
 `capacity-v1` separa dos dimensiones que no deben confundirse:
 
-- `placement`: `gpu_full`, `unified_gpu`, `hybrid`, `cpu` o `unknown`.
+- `placement`: `gpu_full`, `unified_gpu`, `unified_hybrid`, `hybrid`, `cpu` o
+  `unknown`.
 - `pressure`: `normal`, `compressed`, `swapping`, `swap_resident`, `oom` o
   `aborted`.
 
@@ -45,3 +46,9 @@ Metal, pero RAM y GPU siguen compartiendo la misma memoria física. El
 incremento de swap y compresión se calcula respecto a la línea base de cada
 proceso y no debe interpretarse como memoria exclusiva del benchmark si había
 otras cargas activas.
+
+La misma interpretación unificada se aplica a una APU AMD cuando `llama.cpp`
+informa `uma: 1`. `unified_hybrid` indica offload parcial dentro de esa memoria
+compartida. `amdgpu_vram_*`, `amdgpu_gtt_*` y actividad GPU son contadores
+globales del dispositivo; sirven como evidencia de uso, no como atribución
+exacta al proceso.

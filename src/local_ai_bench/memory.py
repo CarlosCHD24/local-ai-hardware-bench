@@ -106,6 +106,10 @@ def summarize_samples(
     swap_peak = maximum("swap_used_bytes")
     compressed_before = first.get("compressed_bytes")
     compressed_peak = maximum("compressed_bytes")
+    amdgpu_vram_before = first.get("amdgpu_vram_used_bytes")
+    amdgpu_vram_peak = maximum("amdgpu_vram_used_bytes")
+    amdgpu_gtt_before = first.get("amdgpu_gtt_used_bytes")
+    amdgpu_gtt_peak = maximum("amdgpu_gtt_used_bytes")
     return {
         "sample_count": len(samples),
         "sample_interval_ms": interval_ms,
@@ -132,6 +136,16 @@ def summarize_samples(
         "peak_process_swap_bytes": maximum("process_swap_bytes"),
         "peak_process_device_memory_used_bytes": maximum("process_device_memory_used_bytes"),
         "peak_process_group_size": maximum("process_group_size"),
+        "amdgpu_device_count": maximum("amdgpu_device_count"),
+        "amdgpu_vram_used_before_bytes": amdgpu_vram_before,
+        "peak_amdgpu_vram_used_bytes": amdgpu_vram_peak,
+        "amdgpu_vram_growth_bytes": _positive_difference(amdgpu_vram_peak, amdgpu_vram_before),
+        "amdgpu_vram_total_bytes": maximum("amdgpu_vram_total_bytes"),
+        "amdgpu_gtt_used_before_bytes": amdgpu_gtt_before,
+        "peak_amdgpu_gtt_used_bytes": amdgpu_gtt_peak,
+        "amdgpu_gtt_growth_bytes": _positive_difference(amdgpu_gtt_peak, amdgpu_gtt_before),
+        "amdgpu_gtt_total_bytes": maximum("amdgpu_gtt_total_bytes"),
+        "peak_amdgpu_gpu_busy_percent": maximum("amdgpu_gpu_busy_percent"),
         "abort_reason": abort_reason,
     }
 
@@ -184,7 +198,7 @@ def _linux_snapshot(process_group_id: int | None = None) -> dict[str, Any]:
     process_rss, process_swap = _linux_process_memory(process_ids)
     device_used, device_total = _nvidia_memory()
     process_device_used = _nvidia_process_memory(process_ids)
-    return {
+    snapshot = {
         "platform": "Linux",
         "available_percent": (
             round(available_kib * 100 / total_kib, 2) if total_kib and available_kib is not None else None
@@ -208,6 +222,72 @@ def _linux_snapshot(process_group_id: int | None = None) -> dict[str, Any]:
         "process_device_memory_used_bytes": process_device_used,
         "process_group_size": len(process_ids),
     }
+    snapshot.update(_amdgpu_snapshot())
+    return snapshot
+
+
+def _amdgpu_snapshot(drm_root: Path = Path("/sys/class/drm")) -> dict[str, Any]:
+    device_paths = _amdgpu_device_paths(drm_root)
+    if not device_paths:
+        return {
+            "amdgpu_device_count": 0,
+            "amdgpu_vram_used_bytes": None,
+            "amdgpu_vram_total_bytes": None,
+            "amdgpu_gtt_used_bytes": None,
+            "amdgpu_gtt_total_bytes": None,
+            "amdgpu_gpu_busy_percent": None,
+        }
+
+    def total(filename: str) -> int | None:
+        values = [_read_integer(path / filename) for path in device_paths]
+        present = [value for value in values if value is not None]
+        return sum(present) if present else None
+
+    busy_values = [_read_integer(path / "gpu_busy_percent") for path in device_paths]
+    busy_present = [value for value in busy_values if value is not None]
+    return {
+        "amdgpu_device_count": len(device_paths),
+        "amdgpu_vram_used_bytes": total("mem_info_vram_used"),
+        "amdgpu_vram_total_bytes": total("mem_info_vram_total"),
+        "amdgpu_gtt_used_bytes": total("mem_info_gtt_used"),
+        "amdgpu_gtt_total_bytes": total("mem_info_gtt_total"),
+        "amdgpu_gpu_busy_percent": max(busy_present) if busy_present else None,
+    }
+
+
+def _amdgpu_device_paths(drm_root: Path = Path("/sys/class/drm")) -> list[Path]:
+    try:
+        cards = sorted(drm_root.glob("card[0-9]*"))
+    except OSError:
+        return []
+    devices: list[Path] = []
+    for card in cards:
+        device = card / "device"
+        if not device.is_dir():
+            continue
+        driver_name = ""
+        try:
+            driver_name = (device / "driver").resolve().name
+        except OSError:
+            pass
+        try:
+            uevent = (device / "uevent").read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            uevent = ""
+        has_amdgpu_metrics = any(
+            (device / filename).is_file()
+            for filename in ("mem_info_vram_used", "mem_info_gtt_used", "gpu_busy_percent")
+        )
+        if driver_name == "amdgpu" or "DRIVER=amdgpu" in uevent or has_amdgpu_metrics:
+            devices.append(device)
+    return devices
+
+
+def _read_integer(path: Path) -> int | None:
+    try:
+        return int(path.read_text(encoding="utf-8", errors="replace").strip())
+    except (OSError, ValueError):
+        return None
 
 
 def _nvidia_memory() -> tuple[int | None, int | None]:

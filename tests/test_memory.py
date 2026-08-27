@@ -8,6 +8,7 @@ from unittest.mock import patch
 from local_ai_bench.memory import (
     MIB,
     MemorySampler,
+    _amdgpu_snapshot,
     _linux_process_group_pids,
     _linux_process_memory,
     _nvidia_process_memory,
@@ -29,6 +30,9 @@ class MemoryTests(unittest.TestCase):
                     "process_rss_bytes": 2 * MIB,
                     "process_swap_bytes": MIB,
                     "process_device_memory_used_bytes": 3 * MIB,
+                    "amdgpu_vram_used_bytes": 96 * MIB,
+                    "amdgpu_gtt_used_bytes": 384 * MIB,
+                    "amdgpu_gpu_busy_percent": 87,
                 },
             ],
             None,
@@ -40,6 +44,9 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(summary["peak_process_rss_bytes"], 2 * MIB)
         self.assertEqual(summary["peak_process_swap_bytes"], MIB)
         self.assertEqual(summary["peak_process_device_memory_used_bytes"], 3 * MIB)
+        self.assertEqual(summary["peak_amdgpu_vram_used_bytes"], 96 * MIB)
+        self.assertEqual(summary["peak_amdgpu_gtt_used_bytes"], 384 * MIB)
+        self.assertEqual(summary["peak_amdgpu_gpu_busy_percent"], 87)
         self.assertEqual(classify_pressure(summary, "ok"), "swapping")
 
     def test_pressure_abort_takes_precedence(self) -> None:
@@ -78,6 +85,29 @@ class MemoryTests(unittest.TestCase):
             self.assertEqual(process_ids, {101, 102})
             self.assertEqual(rss_bytes, 3072 * 1024)
             self.assertEqual(swap_bytes, 32 * 1024)
+
+    def test_reads_amdgpu_sysfs_metrics(self) -> None:
+        with TemporaryDirectory() as directory:
+            drm_root = Path(directory)
+            device = drm_root / "card0" / "device"
+            device.mkdir(parents=True)
+            (device / "uevent").write_text("DRIVER=amdgpu\n", encoding="utf-8")
+            values = {
+                "mem_info_vram_used": 128 * MIB,
+                "mem_info_vram_total": 512 * MIB,
+                "mem_info_gtt_used": 768 * MIB,
+                "mem_info_gtt_total": 8 * 1024 * MIB,
+                "gpu_busy_percent": 73,
+            }
+            for name, value in values.items():
+                (device / name).write_text(str(value), encoding="utf-8")
+
+            snapshot = _amdgpu_snapshot(drm_root)
+
+            self.assertEqual(snapshot["amdgpu_device_count"], 1)
+            self.assertEqual(snapshot["amdgpu_vram_used_bytes"], 128 * MIB)
+            self.assertEqual(snapshot["amdgpu_gtt_used_bytes"], 768 * MIB)
+            self.assertEqual(snapshot["amdgpu_gpu_busy_percent"], 73)
 
     @patch("local_ai_bench.memory._command")
     def test_attributes_nvidia_memory_to_process_group(self, command) -> None:

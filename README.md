@@ -13,7 +13,7 @@ para medir procesamiento de prompt y generación en tokens por segundo.
 - Cuantización común `Q4_K_M`.
 - `llama.cpp` fijado a un commit concreto.
 - Linux CPU, Linux CUDA y macOS Apple Silicon/Metal.
-- Vulkan disponible como opción experimental.
+- Vulkan disponible para GPU integrada AMD como opción experimental UMA.
 - Escenarios `pp512`, `pp4096` y `tg128`.
 - Una ejecución de calentamiento y cinco repeticiones medidas.
 - Pico de memoria residente del proceso cuando `/usr/bin/time` lo permite.
@@ -39,8 +39,9 @@ carecen de una GPU compatible.
 
 Cada proceso se muestrea una vez por segundo. Se registran swap, compresión,
 memoria disponible, page-ins/page-outs, colocación real de capas y buffers y,
-cuando existe, memoria del dispositivo. La suite aborta una prueba si el swap
-crece más de 8 GiB o la memoria disponible cae por debajo del 3 %.
+cuando existe, memoria del dispositivo. En Linux AMD también se registran VRAM
+reservada, GTT y actividad global de `amdgpu`. La suite aborta una prueba si el
+swap crece más de 8 GiB o la memoria disponible cae por debajo del 3 %.
 
 ## Requisitos
 
@@ -49,6 +50,7 @@ crece más de 8 GiB o la memoria disponible cae por debajo del 3 %.
 - macOS: Xcode Command Line Tools.
 - NVIDIA: controlador compatible y CUDA Toolkit con `nvcc` para compilar el
   backend CUDA.
+- AMD APU: Mesa/RADV, Vulkan loader, `vulkaninfo`, `glslc` y cabeceras SPIR-V.
 - Espacio adicional para compilar `llama.cpp` y descargar los modelos.
 
 Las instrucciones completas por backend y distribución están en
@@ -84,6 +86,7 @@ encuentra `nvcc` y `nvidia-smi`, y CPU en el resto. Se puede forzar la decisión
 ```bash
 ./bin/local-ai-bench doctor --backend cpu
 ./bin/local-ai-bench doctor --backend cuda
+./bin/local-ai-bench doctor --backend vulkan
 ```
 
 En Linux se puede ejecutar primero el smoke test sin descargar modelos:
@@ -135,7 +138,8 @@ usuario ni número de serie:
 ```bash
 ./bin/local-ai-bench run --system-id desktop-rtx3060-12gb --backend cuda
 ./bin/local-ai-bench run --system-id macbook-m4-16gb
-./bin/local-ai-bench run --system-id honor-pro16-ryzen5400h-16gb --backend cpu
+./bin/local-ai-bench run --system-id honor-magicbook16-amd-16gb --backend cpu
+./bin/local-ai-bench run --system-id honor-magicbook16-amd-16gb --backend vulkan
 ```
 
 Para una primera comprobación se puede ejecutar únicamente el modelo pequeño:
@@ -164,10 +168,13 @@ y omite las cargas restantes de ese modelo.
 
 ```bash
 ./bin/local-ai-bench compare \
-  results/quick-v1/desktop-rtx4070/20260826T180000Z \
-  results/quick-v1/macbook-m4-16gb/20260826T190000Z \
+  results/quick-v1/honor-magicbook16-amd-16gb/EJECUCION-CPU \
+  results/quick-v1/honor-magicbook16-amd-16gb/EJECUCION-VULKAN \
   --output comparison.md
 ```
+
+La comparación incluye el backend en cada cabecera, por lo que dos ejecuciones
+del mismo equipo se distinguen como `[cpu]` y `[vulkan]`.
 
 ## Resultados
 

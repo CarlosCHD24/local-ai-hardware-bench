@@ -52,7 +52,8 @@ prueba de experiencia completa de una aplicación.
 - CPU: referencia portátil y opción inicial para equipos Linux sin acelerador
   compatible.
 - Vulkan: opción experimental; debe indicarse explícitamente y sus resultados
-  no deben mezclarse con CPU sin mostrar el backend.
+  no deben mezclarse con CPU sin mostrar el backend. En una APU con `uma: 1`,
+  sus asignaciones consumen la misma RAM física que utiliza la CPU.
 
 La suite solicita descargar hasta 99 capas en el acelerador. El resultado de
 `llama-bench` registra cuántas capas se utilizaron realmente. En CPU se fuerza
