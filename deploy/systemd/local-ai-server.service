@@ -1,0 +1,20 @@
+[Unit]
+Description=Local AI inference server (llama.cpp CUDA)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/local-ai-hardware-bench
+EnvironmentFile=-%h/.config/local-ai/server.env
+Environment=CUDA_VISIBLE_DEVICES=0
+ExecStart=%h/local-ai-hardware-bench/bin/local-ai-server
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGINT
+LimitNOFILE=65536
+UMask=0077
+
+[Install]
+WantedBy=default.target

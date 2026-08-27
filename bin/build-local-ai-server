@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+runtime_dir=${LOCAL_AI_BENCH_HOME:-"${project_dir}/.local-ai-bench"}/runtimes/llama.cpp
+source_dir=${LOCAL_AI_SERVER_SOURCE_DIR:-"${runtime_dir}/source"}
+build_dir=${LOCAL_AI_SERVER_BUILD_DIR:-"${runtime_dir}/build-cuda"}
+jobs=${LOCAL_AI_SERVER_BUILD_JOBS:-8}
+
+if [[ ! -f "${source_dir}/CMakeLists.txt" ]]; then
+  printf 'No se encuentra el checkout de llama.cpp en %s\n' "${source_dir}" >&2
+  printf 'Ejecuta primero: ./bin/local-ai-bench prepare --yes --backend cuda\n' >&2
+  exit 1
+fi
+
+cc=${CC:-gcc}
+cxx=${CXX:-g++}
+if [[ -x /usr/bin/gcc-12 && -x /usr/bin/g++-12 ]]; then
+  cc=${CC:-/usr/bin/gcc-12}
+  cxx=${CXX:-/usr/bin/g++-12}
+fi
+
+CC="${cc}" CXX="${cxx}" cmake -S "${source_dir}" -B "${build_dir}" \
+  -DGGML_CUDA=ON \
+  -DGGML_NATIVE=ON \
+  -DLLAMA_BUILD_EXAMPLES=OFF \
+  -DLLAMA_BUILD_TESTS=OFF \
+  -DLLAMA_BUILD_SERVER=ON \
+  -DLLAMA_BUILD_UI=OFF
+
+cmake --build "${build_dir}" --config Release --target llama-server -j "${jobs}"
+"${build_dir}/bin/llama-server" --version

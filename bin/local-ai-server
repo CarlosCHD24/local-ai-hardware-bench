@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+bench_home=${LOCAL_AI_BENCH_HOME:-"${project_dir}/.local-ai-bench"}
+
+server_binary=${LOCAL_AI_SERVER_BINARY:-"${bench_home}/runtimes/llama.cpp/build-cuda/bin/llama-server"}
+model_path=${LOCAL_AI_SERVER_MODEL:-"${bench_home}/models/qwen2.5-7b-instruct-q4_k_m/qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf"}
+api_key_file=${LOCAL_AI_SERVER_API_KEY_FILE:-"${HOME}/.config/local-ai/api-keys"}
+
+host=${LOCAL_AI_SERVER_HOST:-127.0.0.1}
+port=${LOCAL_AI_SERVER_PORT:-8080}
+alias_name=${LOCAL_AI_SERVER_ALIAS:-local-agent}
+ctx_size=${LOCAL_AI_SERVER_CTX_SIZE:-8192}
+parallel=${LOCAL_AI_SERVER_PARALLEL:-2}
+gpu_layers=${LOCAL_AI_SERVER_GPU_LAYERS:-99}
+threads=${LOCAL_AI_SERVER_THREADS:-8}
+threads_batch=${LOCAL_AI_SERVER_THREADS_BATCH:-16}
+threads_http=${LOCAL_AI_SERVER_THREADS_HTTP:-4}
+
+if [[ ! -x "${server_binary}" ]]; then
+  printf 'No existe llama-server ejecutable en %s\n' "${server_binary}" >&2
+  printf 'Compílalo con: ./bin/build-local-ai-server\n' >&2
+  exit 1
+fi
+
+if [[ ! -f "${model_path}" ]]; then
+  printf 'No existe el modelo GGUF en %s\n' "${model_path}" >&2
+  exit 1
+fi
+
+if [[ ! -s "${api_key_file}" ]]; then
+  printf 'No existe un fichero de claves no vacío en %s\n' "${api_key_file}" >&2
+  exit 1
+fi
+
+exec "${server_binary}" \
+  --model "${model_path}" \
+  --alias "${alias_name}" \
+  --host "${host}" \
+  --port "${port}" \
+  --threads "${threads}" \
+  --threads-batch "${threads_batch}" \
+  --threads-http "${threads_http}" \
+  --ctx-size "${ctx_size}" \
+  --parallel "${parallel}" \
+  --n-gpu-layers "${gpu_layers}" \
+  --flash-attn on \
+  --cache-type-k q8_0 \
+  --cache-type-v q8_0 \
+  --cont-batching \
+  --cache-prompt \
+  --jinja \
+  --metrics \
+  --api-key-file "${api_key_file}" \
+  --no-webui \
+  "$@"

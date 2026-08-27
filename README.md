@@ -178,6 +178,14 @@ y omite las cargas restantes de ese modelo.
 La comparación incluye el backend en cada cabecera, por lo que dos ejecuciones
 del mismo equipo se distinguen como `[cpu]` y `[vulkan]`.
 
+## Servidor de inferencia
+
+El sobremesa RTX 3060 puede reutilizar el mismo modelo y runtime como servidor
+OpenAI-compatible para el Mac y el Honor. El perfil reproducible incluye
+servicio `systemd` de usuario, clave API, dos ranuras, Flash Attention, caché KV
+cuantizada y métricas. Consulta [la guía de despliegue](docs/serving.md) para
+instalarlo, limitarlo a la red local y configurar los clientes.
+
 ## Resultados
 
 Los resultados publicados forman un historial acumulativo. Las cifras de una
