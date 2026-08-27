@@ -11,7 +11,7 @@
 
 ## Checkout Linux CPU
 
-- [ ] El checkout se ejecuta con Python 3.11 o posterior.
+- [ ] El checkout se ejecuta con Python 3.10 o posterior.
 - [ ] `./bin/linux-smoke cpu` termina correctamente.
 - [ ] `prepare --backend cpu --skip-models` compila el commit fijado.
 - [ ] Qwen2.5 1.5B se descarga, verifica y ejecuta.
@@ -43,7 +43,8 @@
 - [ ] `vulkaninfo --summary` muestra RADV y no `llvmpipe`/`lavapipe`.
 - [ ] `./bin/linux-smoke vulkan` termina correctamente.
 - [ ] El runtime Vulkan se compila separado del runtime CPU.
-- [ ] GitHub Actions compila el runtime Vulkan fijado en Ubuntu 24.04.
+- [ ] GitHub Actions compila el runtime Vulkan fijado en Ubuntu 22.04 con el
+  SDK oficial de LunarG.
 - [ ] Qwen2.5 1.5B informa backend Vulkan, capas GPU y `uma: 1`.
 - [ ] `capacity-v1` registra VRAM, GTT, actividad y RAM disponible.
 - [ ] La colocación es `unified_gpu`/`unified_hybrid` y el spill mode es

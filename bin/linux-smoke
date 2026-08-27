@@ -17,7 +17,7 @@ case "$selected_backend" in
         ;;
 esac
 
-python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else "Se requiere Python 3.11+")'
+python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else "Se requiere Python 3.10+")'
 
 cd "$project_dir"
 PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v

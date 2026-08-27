@@ -45,12 +45,14 @@ swap crece más de 8 GiB o la memoria disponible cae por debajo del 3 %.
 
 ## Requisitos
 
-- Python 3.11 o posterior.
+- Python 3.10 o posterior.
 - Git, CMake y un compilador C/C++.
 - macOS: Xcode Command Line Tools.
 - NVIDIA: controlador compatible y CUDA Toolkit con `nvcc` para compilar el
   backend CUDA.
 - AMD APU: Mesa/RADV, Vulkan loader, `vulkaninfo`, `glslc` y cabeceras SPIR-V.
+  Ubuntu 22.04 obtiene las herramientas de compilación mediante el SDK oficial
+  de LunarG; Ubuntu 24.04 puede usar sus paquetes estándar.
 - Espacio adicional para compilar `llama.cpp` y descargar los modelos.
 
 Las instrucciones completas por backend y distribución están en

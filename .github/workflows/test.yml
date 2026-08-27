@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.13"]
+        python-version: ["3.10", "3.11", "3.13"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -26,13 +26,13 @@ jobs:
         run: ./bin/local-ai-bench --suite capacity-v1 doctor --backend cpu --json
 
   linux-runtime:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.10"
       - name: Smoke test checkout
         run: ./bin/linux-smoke
       - name: Compile pinned llama.cpp CPU runtime
@@ -41,15 +41,19 @@ jobs:
         run: ./bin/local-ai-bench doctor --backend cpu
 
   linux-vulkan-build:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.10"
+      - name: Configure official LunarG repository for Ubuntu 22.04
+        run: |
+          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc >/dev/null
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
       - name: Install Vulkan build dependencies
-        run: sudo apt-get update && sudo apt-get install -y libvulkan-dev glslc spirv-headers
+        run: sudo apt-get update && sudo apt-get install -y cmake vulkan-sdk
       - name: Compile pinned llama.cpp Vulkan runtime
         run: ./bin/local-ai-bench prepare --backend vulkan --skip-models --jobs 2
       - name: Verify compiled Vulkan binary

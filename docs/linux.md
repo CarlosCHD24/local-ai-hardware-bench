@@ -6,7 +6,7 @@ GitHub. No se considera soportada todavía la instalación global mediante
 
 ## Plataformas objetivo
 
-- Debian 12 o Ubuntu 24.04 con Python 3.11 o posterior.
+- Debian 12, Ubuntu 22.04 o Ubuntu 24.04 con Python 3.10 o posterior.
 - CPU x86-64 mediante el backend nativo de `llama.cpp`.
 - GPU NVIDIA mediante CUDA Toolkit y un controlador compatible.
 - Vulkan queda disponible como backend experimental para AMD/Intel.
@@ -18,13 +18,13 @@ Las dos configuraciones Linux de referencia iniciales son:
 | Sobremesa con GeForce RTX 3060 de 12 GB | CUDA | VRAM completa, offload híbrido y spill hacia RAM con CUDA Unified Memory |
 | Honor MagicBook 16 AMD con 16 GB de RAM | CPU y Vulkan/RADV | Rendimiento CPU, aceleración iGPU y presión sobre RAM compartida |
 
-HONOR documentó esta generación normalmente con Ryzen 5 5600H, aunque el
-modelo real debe confirmarse mediante `lscpu`. CPU continúa siendo la ruta
+El equipo físico de referencia se ha identificado como Ryzen 5 4600H Renoir
+con Radeon integrada, 16 GB de RAM y Ubuntu 22.04. CPU continúa siendo la ruta
 estable; la Radeon integrada se mide como una segunda campaña Vulkan/UMA.
 
 ## Dependencias base
 
-En Debian 12 o Ubuntu 24.04:
+En Debian 12, Ubuntu 22.04 o Ubuntu 24.04:
 
 ```bash
 sudo apt update
@@ -39,7 +39,7 @@ cmake --version
 c++ --version
 ```
 
-El proyecto requiere Python 3.11 o posterior. El commit fijado de `llama.cpp`
+El proyecto requiere Python 3.10 o posterior. El commit fijado de `llama.cpp`
 requiere CMake 3.14 o posterior.
 
 ## Obtener el proyecto
@@ -107,8 +107,8 @@ lscpu | grep "Model name"
 lspci -nnk | grep -EA3 "VGA|Display"
 ```
 
-En Ubuntu/Debian instala la implementación Mesa/RADV y las herramientas de
-compilación Vulkan:
+En Ubuntu 24.04 o Debian instala la implementación Mesa/RADV y las herramientas
+de compilación Vulkan desde los repositorios de la distribución:
 
 ```bash
 sudo apt install -y mesa-vulkan-drivers vulkan-tools \
@@ -116,6 +116,24 @@ sudo apt install -y mesa-vulkan-drivers vulkan-tools \
 vulkaninfo --summary
 ./bin/linux-smoke vulkan
 ```
+
+Ubuntu 22.04 incluye Mesa/RADV pero no publica el paquete `glslc` requerido por
+el commit fijado de `llama.cpp`. En Jammy se usa el repositorio oficial de
+LunarG y su SDK Vulkan:
+
+```bash
+wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | \
+  sudo tee /etc/apt/trusted.gpg.d/lunarg.asc >/dev/null
+sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list \
+  http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
+sudo apt update
+sudo apt install -y cmake vulkan-sdk
+vulkaninfo --summary
+./bin/linux-smoke vulkan
+```
+
+El SDK aporta herramientas y cabeceras; el controlador físico continúa siendo
+Mesa/RADV. No se instala ni se necesita ROCm para esta ruta.
 
 El diagnóstico debe mostrar una Radeon física con topología `unified`. Rechaza
 una instalación que sólo exponga `llvmpipe` o `lavapipe`, porque sería Vulkan
@@ -212,7 +230,7 @@ de cinco minutos por modelo.
 
 ## Vulkan genérico
 
-En Debian/Ubuntu suelen ser necesarios:
+En Debian o Ubuntu 24.04 suelen ser necesarios:
 
 ```bash
 sudo apt install -y libvulkan-dev vulkan-tools glslc spirv-headers
