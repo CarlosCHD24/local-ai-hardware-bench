@@ -191,7 +191,7 @@ como si fueran la misma configuración.
 |---|---|---:|---|---|
 | `macbook-m4` / `macbook-m4-16gb` | Apple M4, GPU integrada de 10 núcleos | 16 GiB unificados | macOS 26.1 | `quick-v1` y `capacity-v1` |
 | `honor-magicbook16-amd-16gb` | Ryzen 5 4600H, Radeon Renoir integrada | 15 GiB utilizables | Ubuntu 22.04.5 | `quick-v1` Vulkan, modelo 1.5B |
-| `desktop-ryzen7-5800x-32gb` | Ryzen 7 5800X, GeForce RTX 3060 12 GB | 31.3 GiB + 12 GB VRAM | Ubuntu 24.04.4 | `quick-v1` CPU, modelo 1.5B |
+| `desktop-ryzen7-5800x-32gb` / `desktop-rtx3060-12gb` | Ryzen 7 5800X, GeForce RTX 3060 12 GB | 31.3 GiB + 12 GB VRAM | Ubuntu 24.04.4 | `quick-v1` CPU 1.5B y CUDA completa |
 
 El procesador del Honor se documenta como Ryzen 5 4600H porque es el modelo
 detectado por el propio sistema durante la prueba.
@@ -208,11 +208,13 @@ prompt y `tg` generación. Cada enlace abre el informe completo de esa ejecució
 | 2026-08-26 | MacBook M4 | Metal | Qwen2.5 7B | 231.70 | 219.19 | 22.04 | [ver](results/quick-v1/macbook-m4/20260826T140126Z/report.md) |
 | 2026-08-27 | Honor MagicBook 16 | Vulkan | Qwen2.5 1.5B | 248.20 | 172.46 | 26.30 | [ver](results/quick-v1/honor-magicbook16-amd-16gb/20260827T091750Z/report.md) |
 | 2026-08-27 | Sobremesa Ryzen 7 5800X | CPU | Qwen2.5 1.5B | 274.35 | 226.61 | 29.09 | [ver](results/quick-v1/desktop-ryzen7-5800x-32gb/20260827T141123Z/report.md) |
+| 2026-08-27 | Sobremesa RTX 3060 12 GB | CUDA | Qwen2.5 1.5B | 8085.88 | 7717.04 | 209.56 | [ver](results/quick-v1/desktop-rtx3060-12gb/20260827T143915Z/report.md) |
+| 2026-08-27 | Sobremesa RTX 3060 12 GB | CUDA | Qwen2.5 3B | 4372.66 | 4199.74 | 131.85 | [ver](results/quick-v1/desktop-rtx3060-12gb/20260827T143915Z/report.md) |
+| 2026-08-27 | Sobremesa RTX 3060 12 GB | CUDA | Qwen2.5 7B | 2345.52 | 2219.82 | 68.41 | [ver](results/quick-v1/desktop-rtx3060-12gb/20260827T143915Z/report.md) |
 
-La RTX 3060 aparece en el inventario del sobremesa, pero no intervino en la
-última fila: el backend fue CPU y se registraron cero capas GPU. La campaña
-CUDA queda pendiente de instalar CUDA Toolkit/`nvcc`; hasta entonces no se
-publicará ningún resultado como rendimiento de la RTX 3060.
+La fila CPU del sobremesa usa cero capas GPU. Las tres filas CUDA usan 99 capas,
+colocación completa en la GPU y alcanzan picos aproximados de 1.4, 2.3 y 4.7
+GiB de VRAM respectivamente, sin swap ni desbordamiento hacia RAM.
 
 ### Historial `capacity-v1`
 
