@@ -40,5 +40,10 @@
   "repetitions": 5,
   "warmup_runs": 1,
   "timeout_seconds": 300,
-  "model_time_budget_seconds": 300
+  "model_time_budget_seconds": 300,
+  "memory_monitoring": {
+    "interval_ms": 1000,
+    "max_swap_growth_bytes": 8589934592,
+    "min_available_percent": 3
+  }
 }

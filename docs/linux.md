@@ -127,12 +127,14 @@ wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | \
 sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list \
   http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
 sudo apt update
-sudo apt install -y cmake vulkan-sdk
+sudo apt install -y cmake shaderc libvulkan-dev vulkan-headers \
+  spirv-headers vulkan-tools
 vulkaninfo --summary
 ./bin/linux-smoke vulkan
 ```
 
-El SDK aporta herramientas y cabeceras; el controlador físico continúa siendo
+Los paquetes de LunarG aportan `glslc`, herramientas y cabeceras sin instalar
+el metapaquete gráfico completo; el controlador físico continúa siendo
 Mesa/RADV. No se instala ni se necesita ROCm para esta ruta.
 
 El diagnóstico debe mostrar una Radeon física con topología `unified`. Rechaza

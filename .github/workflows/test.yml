@@ -53,7 +53,7 @@ jobs:
           wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc >/dev/null
           sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
       - name: Install Vulkan build dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake vulkan-sdk
+        run: sudo apt-get update && sudo apt-get install -y cmake shaderc libvulkan-dev vulkan-headers spirv-headers vulkan-tools
       - name: Compile pinned llama.cpp Vulkan runtime
         run: ./bin/local-ai-bench prepare --backend vulkan --skip-models --jobs 2
       - name: Verify compiled Vulkan binary

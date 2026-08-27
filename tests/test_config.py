@@ -51,6 +51,7 @@ class ConfigTests(unittest.TestCase):
         loaded = load_config("quick-v1", ROOT)
         self.assertEqual(loaded.suite["timeout_seconds"], 300)
         self.assertEqual(loaded.suite["model_time_budget_seconds"], 300)
+        self.assertEqual(loaded.suite["memory_monitoring"]["interval_ms"], 1000)
 
     def test_rejects_profile_incompatible_with_backend(self) -> None:
         loaded = load_config("capacity-v1", ROOT)
