@@ -65,7 +65,8 @@ smoke test real queda fuera de esta tarea.
 ## Archivos permitidos
 
 - `monitoring/nvidia_metrics.py`
-- `monitoring/tests/test_nvidia_metrics.py`
+
+No crear tests adicionales ni modificar los tests de contrato.
 
 ## Verificación obligatoria
 

@@ -84,6 +84,8 @@ En tareas con `Execution: orchestrated` debe:
 - limitar perfil, herramientas, turnos, salida y tiempo;
 - conservar candidato y telemetría;
 - auditar todas las salidas, incluso sin `PASS`;
+- acumular el resultado de todas las verificaciones, sin aceptar por el código
+  del último comando;
 - permitir hasta tres rondas y usar los fallos como devolución concreta;
 - trasladar a `review` sólo una entrega con todos los comandos en verde;
 - encargar la aceptación a un auditor independiente.
@@ -149,8 +151,9 @@ Antes de marcar `ready`, el diseñador ejecuta el preflight en el mismo tipo de
 entorno que usará el agente. No publica comandos que dependan de herramientas
 ausentes. Cada criterio debe indicar directorio, comando y código esperado.
 
-El diseñador aporta tests de contrato que Hermes no puede modificar. Los tests
-propios del ejecutor complementan esos contratos, pero nunca los sustituyen.
+El diseñador aporta tests de contrato que Hermes no puede modificar. Si cubren
+todos los comportamientos, Hermes no crea un segundo archivo de tests. Sólo se
+permiten tests propios para un caso relevante ausente del contrato.
 Para formatos de texto incluye al menos un ejemplo válido y uno inválido.
 
 El diseñador enlaza rutas y documentos, pero no duplica su contenido. Los

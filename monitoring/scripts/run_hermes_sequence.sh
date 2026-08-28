@@ -118,13 +118,9 @@ block_task() {
 allowed_path() {
     case "$1:$2" in
         TASK-002:monitoring/markdown_table.py|\
-        TASK-002:monitoring/tests/test_markdown_table.py|\
         TASK-003:monitoring/taskctl.py|\
-        TASK-003:monitoring/tests/test_taskctl.py|\
         TASK-004:monitoring/taskctl.py|\
-        TASK-004:monitoring/tests/test_taskctl.py|\
         TASK-005:monitoring/nvidia_metrics.py|\
-        TASK-005:monitoring/tests/test_nvidia_metrics.py|\
         TASK-002:monitoring/building/TASKS.md|\
         TASK-003:monitoring/building/TASKS.md|\
         TASK-004:monitoring/building/TASKS.md|\
@@ -155,44 +151,61 @@ check_allowed_paths() {
 intent_to_add() {
     local task_id="$1" path
     case "$task_id" in
-        TASK-002) path='monitoring/markdown_table.py monitoring/tests/test_markdown_table.py' ;;
-        TASK-003|TASK-004) path='monitoring/taskctl.py monitoring/tests/test_taskctl.py' ;;
-        TASK-005) path='monitoring/nvidia_metrics.py monitoring/tests/test_nvidia_metrics.py' ;;
+        TASK-002) path='monitoring/markdown_table.py' ;;
+        TASK-003|TASK-004) path='monitoring/taskctl.py' ;;
+        TASK-005) path='monitoring/nvidia_metrics.py' ;;
     esac
     for path in $path; do
         test ! -f "$worktree/$path" || git -C "$worktree" add -N -- "$path"
     done
 }
 
+normalize_allowed_python() {
+    local task_id="$1" path
+    case "$task_id" in
+        TASK-002) path='monitoring/markdown_table.py' ;;
+        TASK-003|TASK-004) path='monitoring/taskctl.py' ;;
+        TASK-005) path='monitoring/nvidia_metrics.py' ;;
+    esac
+    for path in $path; do
+        test ! -f "$worktree/$path" || sed -i 's/[[:space:]]\+$//' "$worktree/$path"
+    done
+}
+
 audit_task() {
     local task_id="$1" audit_log="$2"
+    local failed=0
     : >"$audit_log"
-    intent_to_add "$task_id" >>"$audit_log" 2>&1 || return 1
-    check_allowed_paths "$task_id" >>"$audit_log" 2>&1 || return 1
+    normalize_allowed_python "$task_id" >>"$audit_log" 2>&1 || failed=1
+    intent_to_add "$task_id" >>"$audit_log" 2>&1 || failed=1
+    check_allowed_paths "$task_id" >>"$audit_log" 2>&1 || failed=1
     (
+        audit_failed=0
         cd "$worktree" || exit 1
         case "$task_id" in
             TASK-002)
-                python3 -m unittest monitoring.contract_tests.test_markdown_table_contract
+                python3 -m unittest monitoring.contract_tests.test_markdown_table_contract || audit_failed=1
                 ;;
             TASK-003)
-                python3 -m unittest monitoring.contract_tests.test_markdown_table_contract monitoring.contract_tests.test_taskctl_contract
-                python3 -m monitoring.taskctl validate --root .
-                python3 -m monitoring.taskctl --help
+                python3 -m unittest monitoring.contract_tests.test_markdown_table_contract monitoring.contract_tests.test_taskctl_contract || audit_failed=1
+                python3 -m monitoring.taskctl validate --root . || audit_failed=1
+                python3 -m monitoring.taskctl --help || audit_failed=1
                 ;;
             TASK-004)
-                python3 -m unittest monitoring.contract_tests.test_taskctl_contract monitoring.contract_tests.test_taskctl_transitions_contract
-                python3 -m monitoring.taskctl validate --root .
-                python3 -m monitoring.taskctl --help
+                python3 -m unittest monitoring.contract_tests.test_taskctl_contract monitoring.contract_tests.test_taskctl_transitions_contract || audit_failed=1
+                python3 -m monitoring.taskctl validate --root . || audit_failed=1
+                python3 -m monitoring.taskctl --help || audit_failed=1
                 ;;
             TASK-005)
-                python3 -m unittest monitoring.contract_tests.test_nvidia_metrics_contract
-                python3 -m monitoring.nvidia_metrics --help
+                python3 -m unittest monitoring.contract_tests.test_nvidia_metrics_contract || audit_failed=1
+                python3 -m monitoring.nvidia_metrics --help || audit_failed=1
                 ;;
         esac
-        python3 -m unittest discover -s monitoring/tests -p 'test_*.py'
-        git diff --check
-    ) >>"$audit_log" 2>&1
+        python3 -m unittest discover -s monitoring/tests -p 'test_*.py' || audit_failed=1
+        git diff --check || audit_failed=1
+        exit "$audit_failed"
+    ) >>"$audit_log" 2>&1 || failed=1
+    return "$failed"
 }
 
 make_prompt() {
@@ -202,13 +215,16 @@ make_prompt() {
         printf 'Completa %s de forma autónoma. Esta es la ronda %s de 3.\n\n' "$task_id" "$round"
         printf 'Trabaja sólo en el directorio recibido mediante --in. La primera herramienta es `pwd`. '
         printf 'No busques otros repositorios. El proveedor autorizado es exclusivamente local-agent.\n\n'
-        printf 'Lee monitoring/AGENTS.md, monitoring/building/README.md, '
-        printf 'monitoring/building/HERMES_TASK_GUIDE.md y %s.\n' "${file#"$worktree/"}"
-        printf 'La tarea ya está reclamada. Modifica sólo sus archivos técnicos permitidos. '
-        printf 'No modifiques monitoring/building/, monitoring/contract_tests/, no hagas commits y no pidas confirmación.\n\n'
-        if test "$round" -gt 1; then
+        if test "$round" -eq 1; then
+            printf 'Lee monitoring/AGENTS.md, monitoring/building/README.md, '
+            printf 'monitoring/building/HERMES_TASK_GUIDE.md y %s.\n' "${file#"$worktree/"}"
+            printf 'La tarea ya está reclamada. Modifica sólo sus archivos técnicos permitidos. '
+            printf 'No modifiques monitoring/building/, monitoring/contract_tests/, no hagas commits y no pidas confirmación.\n\n'
+        else
+            printf 'Es una reparación focalizada sobre el candidato existente. No releas documentación general ni reescribas archivos completos. '
+            printf 'Inspecciona sólo los archivos técnicos y corrige los fallos siguientes.\n\n'
             printf 'La auditoría independiente de la ronda anterior falló. Corrige todos estos fallos literales:\n\n'
-            tail -n 160 "$audit_log"
+            tail -n 100 "$audit_log"
             printf '\n'
         fi
         printf 'Ejecuta las verificaciones de la tarea y termina con el formato breve de HERMES_TASK_GUIDE.md.\n'
@@ -227,7 +243,7 @@ commit_task() {
 }
 
 run_task() {
-    local task_id="$1" round prompt output audit_log run_code previous_audit
+    local task_id="$1" round prompt output audit_log run_code previous_audit max_turns run_budget timeout_seconds
     claim_task "$task_id"
     previous_audit=''
 
@@ -240,12 +256,22 @@ run_task() {
         printf '[%s] Starting %s round %s/%s\n' \
             "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$task_id" "$round" "$round_limit"
 
-        timeout --signal=TERM --kill-after=30s "${round_timeout}s" \
+        if test "$round" -eq 1; then
+            max_turns=12
+            run_budget=600
+            timeout_seconds="$round_timeout"
+        else
+            max_turns=8
+            run_budget=360
+            timeout_seconds=480
+        fi
+
+        timeout --signal=TERM --kill-after=30s "${timeout_seconds}s" \
             "$hermes_bin" -p monitoringworker chat \
             --query-file "$prompt" \
             --in "$worktree" \
-            --max-turns 12 \
-            --run-budget 600 \
+            --max-turns "$max_turns" \
+            --run-budget "$run_budget" \
             --reasoning none \
             --toolsets terminal,file \
             --quiet \

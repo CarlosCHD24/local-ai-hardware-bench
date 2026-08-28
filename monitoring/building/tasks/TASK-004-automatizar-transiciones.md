@@ -50,7 +50,8 @@ Los tests usan un repositorio temporal, `mock.patch` sobre `utc_now` y
 ## Archivos permitidos
 
 - `monitoring/taskctl.py`
-- `monitoring/tests/test_taskctl.py`
+
+No crear tests adicionales ni modificar los tests de contrato.
 
 ## Verificación obligatoria
 

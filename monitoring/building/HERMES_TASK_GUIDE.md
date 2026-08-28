@@ -32,7 +32,8 @@ instrumentados, no en el código productivo.
 Una tarea para Hermes debe cumplir todo lo siguiente:
 
 1. Un único resultado técnico y observable.
-2. Máximo dos archivos de implementación y un archivo de pruebas.
+2. Máximo dos archivos de implementación. Hermes no duplica tests cuando el
+   contrato inmutable ya cubre todos los comportamientos.
 3. Todas las decisiones públicas ya cerradas: nombres, argumentos, formatos,
    errores y códigos de salida.
 4. Preflight probado por el diseñador en el entorno del agente.
@@ -43,8 +44,9 @@ Una tarea para Hermes debe cumplir todo lo siguiente:
 8. Fixture literal cuando el test requiera Markdown, mocks, HTTP, tiempo o
    escritura atómica.
 9. Comandos literales desde un directorio exacto, con código esperado.
-10. Hasta tres rondas independientes de 12 iteraciones, 600 segundos y 2.048
-    tokens de salida por llamada; timeout externo de 720 segundos por ronda.
+10. Primera ronda de 12 iteraciones y 600 segundos; hasta dos correcciones de 8
+    iteraciones y 360 segundos. Todas usan 2.048 tokens máximos de salida y
+    timeout externo de 720 o 480 segundos respectivamente.
 11. Estado final del ejecutor: `PASS` o `FAIL`; nunca `done`.
 
 Si una tarea incumple uno de estos puntos, el diseñador debe dividirla o
@@ -62,6 +64,9 @@ El orquestador debe:
 - conservar telemetría y candidato;
 - ejecutar la auditoría independiente después de cada ronda, aunque la salida
   de Hermes esté truncada o no contenga `PASS`;
+- ejecutar todas las comprobaciones aunque ya exista un path prohibido y
+  acumular sus códigos, sin usar sólo el resultado del último comando;
+- eliminar mecánicamente espacios finales antes de auditar;
 - devolver a Hermes únicamente los errores del auditor y permitir como máximo
   dos rondas correctivas;
 - cambiar `review` y `done`.
@@ -83,6 +88,9 @@ reasoning: none
 max_turns: 12
 run_budget_seconds: 600
 external_timeout_seconds: 720
+repair_max_turns: 8
+repair_budget_seconds: 360
+repair_timeout_seconds: 480
 max_tokens: 2048
 toolsets: terminal,file
 working_directory: raíz del worktree
@@ -120,7 +128,9 @@ no de poder analizar este texto.
 
 ## Rondas y recuperación
 
-Cada ronda parte de los archivos conservados y de un prompt nuevo. Tras cada
+Cada ronda parte de los archivos conservados y de un prompt nuevo. Las rondas
+correctivas no releen documentación general ni reescriben archivos completos;
+reciben sólo el candidato y un máximo de 100 líneas de auditoría. Tras cada
 salida, el orquestador ejecuta siempre las verificaciones inmutables:
 
 1. Si pasan, marca `done`, crea un commit de control y habilita la dependencia.
