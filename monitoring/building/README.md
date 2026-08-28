@@ -27,6 +27,8 @@ building/
 ├── README.md
 ├── TASKS.md
 ├── TASK_TEMPLATE.md
+├── audits/
+│   └── TASK-NNN-agente.md
 └── tasks/
     ├── TASK-001-titulo-breve.md
     └── TASK-002-titulo-breve.md
@@ -90,15 +92,16 @@ divide en tareas y declara las dependencias entre ellas.
 | `ready` | Está definida, no bloqueada y puede ser reclamada |
 | `in_progress` | Un agente la ha reclamado y está trabajando en ella |
 | `blocked` | No puede continuar sin una decisión o cambio externo concreto |
-| `done` | Implementación y verificaciones terminadas |
+| `review` | El ejecutor terminó y espera verificación independiente |
+| `done` | El auditor verificó y aceptó el resultado |
 | `cancelled` | Ya no debe ejecutarse; el motivo queda documentado |
 
 Transiciones normales:
 
 ```text
-draft --> ready --> in_progress --> done
-                         |
-                         +--> blocked --> ready
+draft --> ready --> in_progress --> review --> done
+             ^               |           |
+             +---- blocked <--+           +--> ready
 ```
 
 No se usa un estado ambiguo como `almost_done`. El trabajo pendiente se
@@ -126,7 +129,8 @@ repositorio, salvo que se indique otra ubicación.
 4. Actualiza también la fila de `TASKS.md`.
 5. Implementa únicamente el alcance acordado.
 6. Marca cada paso terminado y registra las verificaciones realizadas.
-7. Si cumple todos los criterios, cambia el estado a `done` y limpia `Owner`.
+7. Si considera satisfechos los criterios, cambia el estado a `review` y
+   limpia `Owner`; sólo el auditor puede marcar `done`.
 8. Actualiza `TASKS.md` en el mismo cambio.
 
 Sólo puede existir un propietario por tarea. Si dos agentes intentan reclamarla,
@@ -150,7 +154,7 @@ deja un traspaso.
 
 ## Cierre y definición de terminado
 
-Una tarea sólo pasa a `done` cuando:
+Una tarea sólo pasa de `review` a `done` cuando el auditor confirma que:
 
 - todos los criterios de aceptación están satisfechos;
 - las verificaciones indicadas se han ejecutado o su omisión está justificada;
@@ -158,6 +162,9 @@ Una tarea sólo pasa a `done` cuando:
 - no quedan decisiones ni errores ocultos;
 - el documento refleja el resultado final, no el plan antiguo;
 - `TASKS.md` coincide con la tarea.
+
+Si la auditoría falla, el auditor documenta los hallazgos en `audits/`, devuelve
+la tarea a `ready` y conserva el candidato original para comparación.
 
 El resultado de una verificación se resume con evidencia corta: comando, estado
 y dato relevante. Los logs completos deben permanecer fuera del documento.
