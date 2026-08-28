@@ -7,12 +7,11 @@ en el documento de cada tarea.
 
 | ID | Tarea | Estado | Owner | Depende de |
 |---|---|---|---|---|
-| TASK-001 | [Crear comprobador seguro de métricas](tasks/TASK-001-crear-comprobador-metricas.md) | `ready` | — | — |
+| TASK-001 | [Crear comprobador seguro de métricas](tasks/TASK-001-crear-comprobador-metricas.md) | `done` | — | — |
 
 ## Próxima tarea
 
-`TASK-001` sigue `ready`: el segundo candidato de Hermes mejoró en eficiencia y
-veracidad, pero no superó las pruebas obligatorias.
+`TASK-001` está `done`. El diseñador puede preparar TASK-002.
 
 ## Reglas del índice
 

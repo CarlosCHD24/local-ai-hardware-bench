@@ -116,6 +116,10 @@ describe con casillas sin marcar y el estado permanece `in_progress`.
 5. Marca `ready` sólo si otro agente puede empezar sin preguntar qué construir.
 6. Añade o actualiza la fila correspondiente en `TASKS.md`.
 
+Antes de marcar `ready`, el diseñador ejecuta el preflight en el mismo tipo de
+entorno que usará el agente. No publica comandos que dependan de herramientas
+ausentes. Cada criterio debe indicar directorio, comando y código esperado.
+
 El diseñador enlaza rutas y documentos, pero no duplica su contenido. Los
 comandos de verificación deben ser seguros y ejecutables desde la raíz del
 repositorio, salvo que se indique otra ubicación.
@@ -132,6 +136,12 @@ repositorio, salvo que se indique otra ubicación.
 7. Si considera satisfechos los criterios, cambia el estado a `review` y
    limpia `Owner`; sólo el auditor puede marcar `done`.
 8. Actualiza `TASKS.md` en el mismo cambio.
+
+Si la tarea crea archivos nuevos, antes de `git diff --check` usa
+`git add -N -- ruta1 ruta2` únicamente con las rutas permitidas. Esto añade
+intención de seguimiento sin guardar contenido y evita que Git omita esos
+archivos de la comprobación. Un comando obligatorio fallido impide pasar a
+`review`, aunque otra variante del comando funcione.
 
 Sólo puede existir un propietario por tarea. Si dos agentes intentan reclamarla,
 el que observe un propietario previo se detiene y elige otra. Un agente puede
@@ -162,6 +172,10 @@ Una tarea sólo pasa de `review` a `done` cuando el auditor confirma que:
 - no quedan decisiones ni errores ocultos;
 - el documento refleja el resultado final, no el plan antiguo;
 - `TASKS.md` coincide con la tarea.
+
+El auditor repite los comandos literales desde el directorio declarado y
+comprueba el diff, no sólo el resumen del ejecutor. Las afirmaciones del agente
+son un handoff, no evidencia de aceptación.
 
 Si la auditoría falla, el auditor documenta los hallazgos en `audits/`, devuelve
 la tarea a `ready` y conserva el candidato original para comparación.

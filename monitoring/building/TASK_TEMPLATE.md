@@ -27,6 +27,12 @@ No incluye:
 
 - Cambio próximo o relacionado que pertenece a otra tarea.
 
+## Preflight
+
+| Directorio | Comando exacto | Código esperado |
+|---|---|---:|
+| Raíz del repositorio | Comando seguro que valide el entorno | `0` |
+
 ## Pasos
 
 - [ ] Paso principal 1.
@@ -41,11 +47,18 @@ No incluye:
 
 ## Verificación
 
-```text
-Comando o procedimiento reproducible desde la raíz del repositorio.
-```
+| Directorio | Comando exacto | Código esperado |
+|---|---|---:|
+| Raíz del repositorio | Comando reproducible | `0` |
 
-Resultado: pendiente.
+Para archivos nuevos, ejecutar primero `git add -N -- rutas-permitidas` y después
+`git diff --check`.
+
+## Evidencias
+
+| Directorio real | Comando | Código | Resultado breve |
+|---|---|---:|---|
+| Pendiente | Pendiente | — | Pendiente |
 
 ## Archivos
 

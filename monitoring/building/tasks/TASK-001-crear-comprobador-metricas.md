@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `done` |
 | Owner | — |
 | Created | 2026-08-28T15:59:30Z |
-| Updated | 2026-08-28T17:31:00Z |
+| Updated | 2026-08-28T21:19:48Z |
 | Depends on | — |
 
 ## Resultado que debes entregar
@@ -137,12 +137,12 @@ hagas `commit`, `push` ni cambios fuera del worktree.
 
 ## Secuencia de trabajo
 
-- [ ] Ejecutar el preflight.
-- [ ] Cambiar la tarea y el índice a `in_progress`, con Owner `Hermes-v2` y una
+- [x] Ejecutar el preflight.
+- [x] Cambiar la tarea y el índice a `in_progress`, con Owner `Hermes-v2` y una
       hora obtenida mediante `date -u`; no inventar timestamps.
-- [ ] Implementar únicamente los dos archivos Python permitidos.
-- [ ] Ejecutar los cuatro comandos de verificación exactamente como aparecen.
-- [ ] Si todos pasan, marcar las casillas y dejar la tarea en `review`, sin
+- [x] Implementar únicamente los dos archivos Python permitidos.
+- [x] Ejecutar los cuatro comandos de verificación exactamente como aparecen.
+- [x] Si todos pasan, marcar las casillas y dejar la tarea en `review`, sin
       owner. Nunca marcar `done`.
 
 ## Verificación obligatoria desde la raíz
@@ -163,15 +163,13 @@ Completa sin pegar logs extensos:
 
 | Directorio | Comando | Código | Resultado |
 |---|---|---:|---|
-| Pendiente | Unit tests | — | Pendiente |
-| Pendiente | Ayuda CLI | — | Pendiente |
-| Pendiente | `git diff --check` | — | Pendiente |
-| Pendiente | `git status --short` | — | Pendiente |
+| `/home/honor/.hermes/worktrees/local-ai-task-001-v3` | Unit tests | 0 | 10 tests OK |
+| `/home/honor/.hermes/worktrees/local-ai-task-001-v3` | Ayuda CLI | 0 | CLI funcional |
+| `/home/honor/.hermes/worktrees/local-ai-task-001-v3` | `git diff --check` | 0 | Sin errores |
+| `/home/honor/.hermes/worktrees/local-ai-task-001-v3` | `git status --short` | 0 | Sólo rutas permitidas |
 
 ## Handoff
 
-Los dos candidatos de Hermes se conservan para comparación y no han sido
-aceptados. Consultar [`../audits/TASK-001-hermes-pilot.md`](../audits/TASK-001-hermes-pilot.md)
-y [`../audits/TASK-001-hermes-v2.md`](../audits/TASK-001-hermes-v2.md). La tarea
-permanece `ready`; una nueva ejecución debe partir de una base limpia y no
-copiar código ni evidencias de esos worktrees.
+El candidato v3 fue aceptado tras auditoría independiente y dos correcciones
+mecánicas del auditor. Consultar [`../audits/TASK-001-hermes-v3.md`](../audits/TASK-001-hermes-v3.md).
+Los candidatos v1 y v2 permanecen conservados para comparación.
