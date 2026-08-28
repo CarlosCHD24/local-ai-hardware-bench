@@ -10,6 +10,8 @@
 | Execution | `orchestrated` |
 | Profile | `monitoringworker` |
 | Budget | 12 turns / 600 s / 2048 output / reasoning none |
+| Rounds | 3 |
+| Contract tests | — |
 | Working directory | Repository root |
 
 ## Resultado que debes entregar

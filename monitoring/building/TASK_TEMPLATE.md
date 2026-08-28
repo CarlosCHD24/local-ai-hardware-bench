@@ -10,6 +10,8 @@
 | Execution | `orchestrated` |
 | Profile | `monitoringworker` |
 | Budget | 12 turns / 600 s / 2048 output / reasoning none |
+| Rounds | 3 |
+| Contract tests | Ruta inmutable ejecutada por el orquestador |
 | Working directory | Repository root |
 
 ## Objetivo
@@ -38,6 +40,7 @@ No incluye:
 - Entradas, salidas, unidades y orden determinista.
 - Errores y códigos de salida sin decisiones pendientes.
 - Efectos externos permitidos y prohibidos.
+- Ejemplo literal válido y ejemplo literal inválido para cada formato.
 
 ## Preflight
 
@@ -65,6 +68,9 @@ No incluye:
 
 Cuando haya mocks, tiempo, red o escritura, incluir un fixture o patrón mínimo
 que el ejecutor deba reutilizar.
+
+Los tests de contrato ya existen, están fuera de `Archivos` y Hermes no puede
+modificarlos. El orquestador los ejecuta al terminar cada ronda.
 
 ## Verificación
 

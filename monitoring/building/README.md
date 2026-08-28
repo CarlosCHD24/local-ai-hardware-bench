@@ -83,6 +83,8 @@ En tareas con `Execution: orchestrated` debe:
 - reclamar y actualizar la tarea antes de invocar Hermes;
 - limitar perfil, herramientas, turnos, salida y tiempo;
 - conservar candidato y telemetría;
+- auditar todas las salidas, incluso sin `PASS`;
+- permitir hasta tres rondas y usar los fallos como devolución concreta;
 - trasladar a `review` sólo una entrega con todos los comandos en verde;
 - encargar la aceptación a un auditor independiente.
 
@@ -106,9 +108,10 @@ divide en tareas y declara las dependencias entre ellas.
 
 Para Hermes se aplican además los límites de
 [`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md): máximo dos archivos técnicos y
-uno de pruebas, hasta diez comportamientos verificables y una sola interfaz
-principal. Si no cabe previsiblemente en 12 iteraciones, se divide antes de
-marcar `ready`.
+uno de pruebas, entre cuatro y seis comportamientos verificables y una sola
+interfaz principal. Si no cabe previsiblemente en una ronda de 12 iteraciones,
+se divide antes de marcar `ready`. Las rondas adicionales corrigen defectos; no
+justifican una tarea inicial mayor.
 
 ## Estados
 
@@ -145,6 +148,10 @@ describe con casillas sin marcar y el estado permanece `in_progress`.
 Antes de marcar `ready`, el diseñador ejecuta el preflight en el mismo tipo de
 entorno que usará el agente. No publica comandos que dependan de herramientas
 ausentes. Cada criterio debe indicar directorio, comando y código esperado.
+
+El diseñador aporta tests de contrato que Hermes no puede modificar. Los tests
+propios del ejecutor complementan esos contratos, pero nunca los sustituyen.
+Para formatos de texto incluye al menos un ejemplo válido y uno inválido.
 
 El diseñador enlaza rutas y documentos, pero no duplica su contenido. Los
 comandos de verificación deben ser seguros y ejecutables desde la raíz del
@@ -207,8 +214,9 @@ El auditor repite los comandos literales desde el directorio declarado y
 comprueba el diff, no sólo el resumen del ejecutor. Las afirmaciones del agente
 son un handoff, no evidencia de aceptación.
 
-Si la auditoría falla, el auditor documenta los hallazgos en `audits/`, devuelve
-la tarea a `ready` y conserva el candidato original para comparación.
+Si la auditoría falla y quedan rondas, el orquestador conserva el candidato y
+devuelve los fallos exactos a una nueva sesión. Después de la tercera ronda,
+marca `blocked`, limpia `Owner` y conserva el candidato para comparación.
 
 El resultado de una verificación se resume con evidencia corta: comando, estado
 y dato relevante. Los logs completos deben permanecer fuera del documento.

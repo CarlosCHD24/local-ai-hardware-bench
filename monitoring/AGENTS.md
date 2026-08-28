@@ -23,6 +23,8 @@ Estas reglas se aplican a todo el árbol `monitoring/`.
     `git diff --check`, sin crear commits.
 11. Devuelve `PASS` sólo cuando todos los comandos obligatorios tengan el código
     esperado. Si alguno falla, devuelve `FAIL` y conserva el trabajo parcial.
+12. No modifiques `monitoring/contract_tests/`. Son contratos inmutables del
+    diseñador y el orquestador los ejecuta después de cada ronda.
 
 Si una instrucción esencial es ambigua o exige ampliar el alcance, devuelve
 `FAIL` con el bloqueo. En ejecución no orquestada, marca además la tarea como
