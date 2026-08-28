@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `done` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-28T22:52:58Z |
+| Updated | 2026-08-28T23:17:33Z |
 | Depends on | TASK-001 |
 | Execution | `orchestrated` |
 | Profile | `monitoringworker` |
@@ -45,7 +45,7 @@ Formato válido literal:
 ```markdown
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `done` |
 ```
 
 Formato inválido literal, que debe lanzar `TableFormatError`:
