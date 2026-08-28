@@ -153,6 +153,12 @@ La potencia instantánea se integrará en el tiempo para producir un contador de
 energía GPU. El contador debe conservar continuidad entre muestras y reiniciarse
 de forma detectable si se reinicia el exportador.
 
+El MVP comenzará con un colector mínimo en Python y biblioteca estándar que
+convierta una muestra de `nvidia-smi` a formato Prometheus. La exposición para
+scrape —servidor HTTP o textfile collector— se decidirá en una tarea posterior.
+Esto permite validar primero nombres, unidades, errores y privacidad sin unir
+implementación, despliegue y operación en un mismo cambio.
+
 ### 4.5. Gateway de llamadas
 
 El gateway se incorporará después del primer MVP y será el único punto de
@@ -397,8 +403,7 @@ El MVP se considerará completo cuando:
 
 - Tarifa inicial en EUR/kWh.
 - Retención definitiva después de medir el volumen real de series.
-- Exportador NVIDIA de terceros frente a un colector mínimo mantenido en este
-  repositorio.
+- Exposición del colector NVIDIA mediante HTTP frente a textfile collector.
 - Método para observar el cgroup del servicio de usuario de `systemd`.
 - Dispositivo de medición eléctrica total, si se incorpora.
 - Nivel de desglose por cliente permitido por privacidad.

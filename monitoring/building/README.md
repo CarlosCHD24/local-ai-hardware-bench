@@ -16,6 +16,8 @@ copiarán logs extensos ni explicaciones generales que ya estén en
 1. `../README.md` define el producto y su arquitectura.
 2. El fichero individual de una tarea define su alcance y estado real.
 3. [`TASKS.md`](TASKS.md) es el índice resumido de todas las tareas.
+4. [`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md) define el contrato de
+   ejecución del agente local.
 
 Si el índice y una tarea discrepan, manda el fichero individual. El siguiente
 agente corregirá el índice antes de continuar.
@@ -25,6 +27,7 @@ agente corregirá el índice antes de continuar.
 ```text
 building/
 ├── README.md
+├── HERMES_TASK_GUIDE.md
 ├── TASKS.md
 ├── TASK_TEMPLATE.md
 ├── audits/
@@ -70,6 +73,23 @@ El ejecutor puede tomar decisiones locales y reversibles. Una decisión que
 cambie arquitectura, seguridad, datos persistidos o interfaces públicas debe
 volver al diseñador o quedar bloqueada para revisión.
 
+### Orquestador
+
+El orquestador prepara la ejecución y no delega control de proceso al modelo.
+En tareas con `Execution: orchestrated` debe:
+
+- validar dependencias y preflight;
+- crear el worktree y fijar la raíz autorizada;
+- reclamar y actualizar la tarea antes de invocar Hermes;
+- limitar perfil, herramientas, turnos, salida y tiempo;
+- conservar candidato y telemetría;
+- trasladar a `review` sólo una entrega con todos los comandos en verde;
+- encargar la aceptación a un auditor independiente.
+
+Hermes no modifica los documentos de workflow de `building/` en este modo. Su
+autonomía se limita a los archivos técnicos declarados y a ejecutar sus
+verificaciones.
+
 ## Tamaño de una tarea
 
 Cada tarea debe cumplir estas reglas:
@@ -84,12 +104,18 @@ Cada tarea debe cumplir estas reglas:
 Si la descripción necesita varias entregas independientes, el diseñador la
 divide en tareas y declara las dependencias entre ellas.
 
+Para Hermes se aplican además los límites de
+[`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md): máximo dos archivos técnicos y
+uno de pruebas, hasta diez comportamientos verificables y una sola interfaz
+principal. Si no cabe previsiblemente en 12 iteraciones, se divide antes de
+marcar `ready`.
+
 ## Estados
 
 | Estado | Significado |
 |---|---|
 | `draft` | Falta una decisión, información o definición del diseñador |
-| `ready` | Está definida, no bloqueada y puede ser reclamada |
+| `ready` | Está completamente definida; se reclama cuando sus dependencias estén `done` |
 | `in_progress` | Un agente la ha reclamado y está trabajando en ella |
 | `blocked` | No puede continuar sin una decisión o cambio externo concreto |
 | `review` | El ejecutor terminó y espera verificación independiente |
@@ -136,6 +162,10 @@ repositorio, salvo que se indique otra ubicación.
 7. Si considera satisfechos los criterios, cambia el estado a `review` y
    limpia `Owner`; sólo el auditor puede marcar `done`.
 8. Actualiza `TASKS.md` en el mismo cambio.
+
+En `Execution: orchestrated`, los pasos 3, 4, 7 y 8 pertenecen al orquestador.
+Hermes no toca la tarea ni el índice y entrega el formato definido en
+[`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md).
 
 Si la tarea crea archivos nuevos, antes de `git diff --check` usa
 `git add -N -- ruta1 ruta2` únicamente con las rutas permitidas. Esto añade
@@ -201,6 +231,9 @@ y dato relevante. Los logs completos deben permanecer fuera del documento.
 3. [`TASKS.md`](TASKS.md), para ver el tablero actual.
 4. La tarea elegida y los ficheros de sus dependencias.
 5. Sólo después, los archivos de implementación relevantes.
+
+Para Hermes, leer además [`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md) y no
+leer auditorías antiguas salvo petición expresa del orquestador.
 
 Este orden permite continuar el proyecto con contexto suficiente y evita que el
 estado dependa de quién realizó el trabajo anterior.

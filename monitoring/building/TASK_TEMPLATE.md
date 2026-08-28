@@ -7,6 +7,10 @@
 | Created | AAAA-MM-DDTHH:MM:SSZ |
 | Updated | AAAA-MM-DDTHH:MM:SSZ |
 | Depends on | — |
+| Execution | `orchestrated` |
+| Profile | `monitoringworker` |
+| Budget | 12 turns / 600 s / 2048 output / reasoning none |
+| Working directory | Repository root |
 
 ## Objetivo
 
@@ -16,6 +20,7 @@ Una frase que describa el resultado observable de esta tarea.
 
 - Documentos o rutas que el ejecutor necesita leer.
 - Decisiones ya tomadas que no debe volver a abrir.
+- No leer auditorías históricas ni otros worktrees.
 
 ## Alcance
 
@@ -26,6 +31,13 @@ Incluye:
 No incluye:
 
 - Cambio próximo o relacionado que pertenece a otra tarea.
+
+## Contrato cerrado
+
+- Comando, función o archivo exacto que se entrega.
+- Entradas, salidas, unidades y orden determinista.
+- Errores y códigos de salida sin decisiones pendientes.
+- Efectos externos permitidos y prohibidos.
 
 ## Preflight
 
@@ -38,12 +50,21 @@ No incluye:
 - [ ] Paso principal 1.
 - [ ] Paso principal 2.
 - [ ] Ejecutar las verificaciones.
-- [ ] Actualizar esta tarea y `TASKS.md`.
+- [ ] Entregar resultado con el formato de `HERMES_TASK_GUIDE.md`.
 
 ## Criterios de aceptación
 
 - [ ] Resultado comprobable 1.
 - [ ] Resultado comprobable 2.
+
+## Matriz mínima de pruebas
+
+| Prueba | Requisito que demuestra |
+|---|---|
+| Nombre exacto | Comportamiento y resultado esperado |
+
+Cuando haya mocks, tiempo, red o escritura, incluir un fixture o patrón mínimo
+que el ejecutor deba reutilizar.
 
 ## Verificación
 
@@ -62,7 +83,8 @@ Para archivos nuevos, ejecutar primero `git add -N -- rutas-permitidas` y despu�
 
 ## Archivos
 
-- Pendiente.
+- Rutas técnicas exactas que Hermes puede modificar.
+- En modo `orchestrated`, nunca incluir `building/`.
 
 ## Decisiones
 

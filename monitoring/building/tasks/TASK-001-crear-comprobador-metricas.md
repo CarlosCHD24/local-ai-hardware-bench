@@ -5,8 +5,12 @@
 | Status | `done` |
 | Owner | — |
 | Created | 2026-08-28T15:59:30Z |
-| Updated | 2026-08-28T21:19:48Z |
+| Updated | 2026-08-28T21:41:16Z |
 | Depends on | — |
+| Execution | `orchestrated` |
+| Profile | `monitoringworker` |
+| Budget | 12 turns / 600 s / 2048 output / reasoning none |
+| Working directory | Repository root |
 
 ## Resultado que debes entregar
 
