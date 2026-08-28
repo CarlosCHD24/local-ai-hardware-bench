@@ -17,7 +17,8 @@ la definición de terminado.
 
 - Hermes Agent 0.20.6.
 - Modelo `local-agent` servido por Qwen 3.5 9B Q6_K.
-- Razonamiento configurado como `off`.
+- La configuración almacenada indicaba `medium`, pero la telemetría registró
+  cero tokens de razonamiento; el modo efectivo del primer piloto es ambiguo.
 - Herramientas limitadas a `terminal,file`.
 - Ejecución one-shot en un worktree Git aislado.
 - Sin commits, pushes ni cambios en el servidor de inferencia.

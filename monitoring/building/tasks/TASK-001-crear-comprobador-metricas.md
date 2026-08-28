@@ -5,7 +5,7 @@
 | Status | `ready` |
 | Owner | — |
 | Created | 2026-08-28T15:59:30Z |
-| Updated | 2026-08-28T17:07:02Z |
+| Updated | 2026-08-28T17:31:00Z |
 | Depends on | — |
 
 ## Resultado que debes entregar
@@ -53,6 +53,10 @@ Implementa `monitoring/check_llama_metrics.py` con biblioteca estándar:
   código `3`.
 - `/metrics` debe contener las diez métricas exactas de la lista inferior. Si
   falta alguna, devuelve código `4`.
+- El código `4` sólo se usa después de recibir y analizar `/metrics`; un fallo
+  HTTP o de red en ese endpoint también devuelve `3`.
+- Pasa el valor de `--timeout` a las dos llamadas de `urlopen`; no lo fijes en
+  funciones auxiliares.
 - En éxito devuelve `0` y escribe un mensaje breve en stdout.
 - Los errores se escriben en stderr. Nunca muestres la clave ni cabeceras.
 
@@ -100,6 +104,27 @@ No alteres `sys.path`, no accedas a la red real y no leas claves reales.
 Cada prueba de código de salida debe invocar comportamiento real de `main`; no
 se acepta comprobar sólo una constante ni ignorar el código devuelto.
 
+Usa este patrón mínimo para aislar entorno y respuestas. Puedes ampliarlo, pero
+no reemplazarlo por `sys.path` ni por acceso de red:
+
+```python
+class FakeResponse:
+    def __init__(self, body, status=200):
+        self.body, self.status = body.encode(), status
+    def __enter__(self): return self
+    def __exit__(self, *args): return False
+    def read(self): return self.body
+
+with mock.patch.dict(os.environ, {"LOCAL_AI_API_KEY": "testkey123"}, clear=True), \
+     mock.patch("monitoring.check_llama_metrics.urllib.request.urlopen",
+                side_effect=[FakeResponse(health), FakeResponse(metrics)]) as urlopen:
+    result = check_llama_metrics.main(["--timeout", "7"])
+```
+
+En el test de éxito comprueba además que ambas llamadas recibieron `timeout=7`.
+Para la clave vacía crea un fichero temporal real con `tempfile`; no simules una
+función auxiliar. Cada test debe aislar `os.environ` con `mock.patch.dict`.
+
 ## Archivos permitidos
 
 - `monitoring/check_llama_metrics.py`
@@ -145,7 +170,8 @@ Completa sin pegar logs extensos:
 
 ## Handoff
 
-El primer candidato no fue aceptado y se conserva únicamente como referencia
-en [`../audits/TASK-001-hermes-pilot.md`](../audits/TASK-001-hermes-pilot.md).
-Esta segunda ejecución debe empezar desde la base limpia, no corregir aquel
-worktree ni copiar sus afirmaciones de verificación.
+Los dos candidatos de Hermes se conservan para comparación y no han sido
+aceptados. Consultar [`../audits/TASK-001-hermes-pilot.md`](../audits/TASK-001-hermes-pilot.md)
+y [`../audits/TASK-001-hermes-v2.md`](../audits/TASK-001-hermes-v2.md). La tarea
+permanece `ready`; una nueva ejecución debe partir de una base limpia y no
+copiar código ni evidencias de esos worktrees.

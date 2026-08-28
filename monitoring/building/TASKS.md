@@ -11,8 +11,8 @@ en el documento de cada tarea.
 
 ## Próxima tarea
 
-`TASK-001` sigue `ready` con un contrato cerrado, preflight y matriz de pruebas
-para realizar una segunda ejecución controlada con Hermes.
+`TASK-001` sigue `ready`: el segundo candidato de Hermes mejoró en eficiencia y
+veracidad, pero no superó las pruebas obligatorias.
 
 ## Reglas del índice
 
