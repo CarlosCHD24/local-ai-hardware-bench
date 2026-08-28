@@ -11,8 +11,8 @@ en el documento de cada tarea.
 
 ## Próxima tarea
 
-`TASK-001` sigue `ready` después de que el primer candidato de Hermes no
-superase la auditoría independiente.
+`TASK-001` sigue `ready` con un contrato cerrado, preflight y matriz de pruebas
+para realizar una segunda ejecución controlada con Hermes.
 
 ## Reglas del índice
 

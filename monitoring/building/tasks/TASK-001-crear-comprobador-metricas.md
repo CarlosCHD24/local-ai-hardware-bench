@@ -5,89 +5,147 @@
 | Status | `ready` |
 | Owner | — |
 | Created | 2026-08-28T15:59:30Z |
-| Updated | 2026-08-28T15:59:30Z |
+| Updated | 2026-08-28T17:07:02Z |
 | Depends on | — |
 
-## Objetivo
+## Resultado que debes entregar
 
-Crear un comprobador Python sin dependencias externas que valide de forma
-segura los endpoints `/health` y `/metrics` de `llama-server`.
-
-## Contexto mínimo
-
-- Leer `monitoring/AGENTS.md` y `monitoring/building/README.md`.
-- El servidor exige `Authorization: Bearer` y nunca debe mostrarse la clave.
-- Las métricas Prometheus de `llama.cpp` contienen `:` en sus nombres.
-
-## Alcance
-
-Incluye:
-
-- `monitoring/check_llama_metrics.py` ejecutable con `python3 -m`.
-- Pruebas unitarias en `monitoring/tests/test_check_llama_metrics.py`.
-- Sólo biblioteca estándar de Python 3.10 o posterior.
-- Base URL configurable, con `http://127.0.0.1:8080` por defecto.
-- Clave desde `--api-key-file` o, si no se indica, `LOCAL_AI_API_KEY`.
-- Timeout configurable y códigos de salida documentados en `--help`.
-
-No incluye:
-
-- Instalar Prometheus, Grafana o paquetes Python.
-- Modificar o reiniciar `llama-server`.
-- Persistir métricas ni calcular energía o costes.
-- Cambiar archivos fuera de `monitoring/`, salvo el estado de esta tarea.
-
-## Comportamiento requerido
-
-- Considerar sano `/health` sólo con HTTP correcto y JSON `status: ok`.
-- Verificar en `/metrics` las métricas de prompt, caché, generación,
-  rendimiento y colas descritas en `monitoring/README.md`.
-- Aceptar líneas Prometheus con etiquetas y omitir comentarios.
-- Salir con `0` al validar, `2` ante configuración inválida, `3` ante fallo
-  HTTP/red y `4` si falta una métrica requerida.
-- Escribir errores breves en stderr sin incluir la clave ni cabeceras.
-
-## Pasos
-
-- [ ] Reclamar la tarea y actualizar `TASKS.md`.
-- [ ] Implementar el comprobador.
-- [ ] Añadir pruebas de éxito, configuración, fallo HTTP y métrica ausente.
-- [ ] Ejecutar las verificaciones.
-- [ ] Registrar resultado, archivos y estado final.
-
-## Criterios de aceptación
-
-- [ ] Funciona mediante `python3 -m monitoring.check_llama_metrics --help`.
-- [ ] No añade dependencias ni contiene claves o direcciones privadas fijas.
-- [ ] Las pruebas cubren los códigos de salida `0`, `2`, `3` y `4`.
-- [ ] Una clave de prueba no aparece en stdout, stderr ni excepciones visibles.
-- [ ] Todo el conjunto de pruebas existente sigue pasando.
-
-## Verificación
+Dos archivos Python, sin dependencias externas, que permitan ejecutar desde la
+raíz del repositorio:
 
 ```text
+python3 -m monitoring.check_llama_metrics [opciones]
 python3 -m unittest discover -s monitoring/tests -p 'test_*.py'
-python3 -m monitoring.check_llama_metrics --help
-python3 -m pytest
-git diff --check
 ```
 
-Resultado: pendiente.
+El primer comando valida `/health` y `/metrics` de `llama-server`. El segundo
+debe terminar con código `0` y probar todos los casos de la matriz inferior.
+
+## Preflight obligatorio
+
+Antes de modificar archivos, ejecuta desde la raíz del repositorio:
+
+```text
+pwd
+git rev-parse --show-toplevel
+python3 --version
+python3 -c "import argparse, json, unittest, urllib.request"
+```
+
+Continúa sólo si los dos primeros comandos muestran el mismo directorio, Python
+es 3.10 o posterior y el último comando termina con código `0`. No instales ni
+intentes usar `pytest`. Si falla el preflight, no programes: deja la tarea en
+`ready` y registra el comando fallido como `NO EJECUTADO` en `Handoff`.
+
+## Contrato cerrado
+
+Implementa `monitoring/check_llama_metrics.py` con biblioteca estándar:
+
+- Punto de entrada `main(argv=None) -> int` y ejecución mediante `python3 -m`.
+- Opciones exactas: `--base-url`, `--api-key-file` y `--timeout`.
+- URL predeterminada: `http://127.0.0.1:8080`; acepta una `/` final.
+- Timeout predeterminado positivo. Un timeout `<= 0` devuelve código `2`.
+- Si se indica `--api-key-file`, lee y recorta ese fichero. En otro caso usa
+  `LOCAL_AI_API_KEY`. Una clave ausente o vacía devuelve código `2`.
+- Envía `Authorization: Bearer <clave>` a ambos endpoints.
+- `/health` sólo es válido con HTTP 2xx, JSON válido y `status == "ok"`.
+- Cualquier fallo de red, HTTP, lectura o respuesta health inválida devuelve
+  código `3`.
+- `/metrics` debe contener las diez métricas exactas de la lista inferior. Si
+  falta alguna, devuelve código `4`.
+- En éxito devuelve `0` y escribe un mensaje breve en stdout.
+- Los errores se escriben en stderr. Nunca muestres la clave ni cabeceras.
+
+Métricas obligatorias:
+
+```text
+llamacpp:prompt_tokens_total
+llamacpp:prompt_tokens_cached_total
+llamacpp:tokens_predicted_total
+llamacpp:prompt_seconds_total
+llamacpp:tokens_predicted_seconds_total
+llamacpp:prompt_tokens_seconds
+llamacpp:predicted_tokens_seconds
+llamacpp:requests_processing
+llamacpp:requests_deferred
+llamacpp:n_tokens_max
+```
+
+Al analizar Prometheus, ignora líneas vacías y comentarios. Considera nombre de
+métrica el texto anterior a `{` o al primer espacio; por tanto debes aceptar
+líneas con etiquetas como `llamacpp:requests_processing{slot="0"} 1`.
+
+## Matriz mínima de pruebas
+
+Crea `monitoring/tests/test_check_llama_metrics.py` usando `unittest` y
+`unittest.mock`. Importa siempre con:
+
+```python
+from monitoring import check_llama_metrics
+```
+
+No alteres `sys.path`, no accedas a la red real y no leas claves reales.
+
+| Prueba | Comportamiento que debe demostrar |
+|---|---|
+| `test_success_returns_0_and_accepts_labels` | Health válido y las 10 métricas, incluyendo una con etiquetas, devuelven `0` |
+| `test_missing_key_returns_2` | Sin fichero ni variable de entorno devuelve `2` |
+| `test_empty_key_file_returns_2` | Un fichero vacío devuelve `2` |
+| `test_non_positive_timeout_returns_2` | Timeout cero o negativo devuelve `2` |
+| `test_http_failure_returns_3_without_secret` | Fallo HTTP devuelve `3`; la clave de prueba no aparece en stdout ni stderr |
+| `test_invalid_health_returns_3` | JSON inválido o status distinto de ok devuelve `3` |
+| `test_missing_metric_returns_4` | Respuesta válida sin `requests_deferred` devuelve `4` |
+| `test_required_metric_catalog_is_exact` | El catálogo contiene exactamente las 10 métricas indicadas |
+
+Cada prueba de código de salida debe invocar comportamiento real de `main`; no
+se acepta comprobar sólo una constante ni ignorar el código devuelto.
 
 ## Archivos permitidos
 
 - `monitoring/check_llama_metrics.py`
 - `monitoring/tests/test_check_llama_metrics.py`
-- `monitoring/building/tasks/TASK-001-crear-comprobador-metricas.md`
-- `monitoring/building/TASKS.md`
+- Este documento: únicamente estado, owner, `Updated`, casillas y evidencias.
+- `monitoring/building/TASKS.md`: únicamente estado, owner y próxima tarea.
 
-## Decisiones
+No crees otros archivos, no instales paquetes, no uses el servidor real y no
+hagas `commit`, `push` ni cambios fuera del worktree.
 
-- El comprobador se mantiene independiente de Prometheus para servir también
-  como smoke test de despliegue.
+## Secuencia de trabajo
+
+- [ ] Ejecutar el preflight.
+- [ ] Cambiar la tarea y el índice a `in_progress`, con Owner `Hermes-v2` y una
+      hora obtenida mediante `date -u`; no inventar timestamps.
+- [ ] Implementar únicamente los dos archivos Python permitidos.
+- [ ] Ejecutar los cuatro comandos de verificación exactamente como aparecen.
+- [ ] Si todos pasan, marcar las casillas y dejar la tarea en `review`, sin
+      owner. Nunca marcar `done`.
+
+## Verificación obligatoria desde la raíz
+
+| Comando exacto | Código esperado |
+|---|---:|
+| `python3 -m unittest discover -s monitoring/tests -p 'test_*.py'` | `0` |
+| `python3 -m monitoring.check_llama_metrics --help` | `0` |
+| `git diff --check` | `0` |
+| `git status --short` | `0`; sólo rutas permitidas |
+
+No sustituyas estos comandos por otros. Si alguno no puede ejecutarse o falla,
+registra `FAIL` o `NO EJECUTADO` con su código real y no marques su criterio.
+
+## Evidencias del ejecutor
+
+Completa sin pegar logs extensos:
+
+| Directorio | Comando | Código | Resultado |
+|---|---|---:|---|
+| Pendiente | Unit tests | — | Pendiente |
+| Pendiente | Ayuda CLI | — | Pendiente |
+| Pendiente | `git diff --check` | — | Pendiente |
+| Pendiente | `git status --short` | — | Pendiente |
 
 ## Handoff
 
-El primer candidato de Hermes no superó la revisión independiente. Consultar
-[`../audits/TASK-001-hermes-pilot.md`](../audits/TASK-001-hermes-pilot.md).
-La tarea permanece `ready` para una nueva ejecución o corrección.
+El primer candidato no fue aceptado y se conserva únicamente como referencia
+en [`../audits/TASK-001-hermes-pilot.md`](../audits/TASK-001-hermes-pilot.md).
+Esta segunda ejecución debe empezar desde la base limpia, no corregir aquel
+worktree ni copiar sus afirmaciones de verificación.
