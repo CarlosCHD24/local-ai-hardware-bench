@@ -88,4 +88,6 @@ Resultado: pendiente.
 
 ## Handoff
 
-Sin trabajo pendiente ni bloqueos.
+El primer candidato de Hermes no superó la revisión independiente. Consultar
+[`../audits/TASK-001-hermes-pilot.md`](../audits/TASK-001-hermes-pilot.md).
+La tarea permanece `ready` para una nueva ejecución o corrección.

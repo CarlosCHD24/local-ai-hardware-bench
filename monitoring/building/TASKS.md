@@ -11,7 +11,8 @@ en el documento de cada tarea.
 
 ## Próxima tarea
 
-`TASK-001` está preparada para la prueba piloto con Hermes.
+`TASK-001` sigue `ready` después de que el primer candidato de Hermes no
+superase la auditoría independiente.
 
 ## Reglas del índice
 
