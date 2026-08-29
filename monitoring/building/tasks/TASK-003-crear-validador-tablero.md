@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `blocked` |
+| Status | `ready` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-29T09:14:05Z |
+| Updated | 2026-08-29T10:07:31Z |
 | Depends on | TASK-002 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -51,6 +51,37 @@ archivos.
 El fixture válido usa exclusivamente tablas con una barra `|`, exactamente como
 los documentos reales. Cualquier fila que empiece con `||` es inválida.
 
+## Pista para el reintento
+
+El primer argumento posicional es una suborden obligatoria. Crear un subparser
+`validate` y añadir `--root` a ese subparser; debe funcionar exactamente:
+
+```python
+subparsers = parser.add_subparsers(dest="command", required=True)
+validate_parser = subparsers.add_parser("validate")
+validate_parser.add_argument("--root", default=".")
+```
+
+No basta con corregir `argparse`. Reparar también estos fallos ya presentes:
+
+1. Descubrir cada ruta `TASK-NNN-slug.md` y extraer ID y slug con una expresión
+   que conserve `TASK-001` completo; `split("-")[0]` devuelve sólo `TASK`.
+2. Guardar las tareas por ID con su `Path` y metadatos. Iterar sobre esos
+   objetos, nunca sobre valores booleanos.
+3. Parsear `TASKS.md` con `monitoring.markdown_table.parse_first_table`. Sus
+   columnas son `ID`, `Tarea`, `Estado`, `Owner` y `Depende de`; extraer del
+   enlace Markdown tanto el texto como `tasks/TASK-NNN-slug.md`.
+4. Quitar exactamente un par de backticks al comparar estados como `ready` o
+   `done`. Para cualquier estado distinto de `in_progress`, el owner debe ser
+   `—`; `in_progress` requiere owner no vacío y distinto de `—`.
+5. Comparar por ID el estado, owner, dependencia y enlace de índice contra el
+   documento. Comprobar dependencia existente y distinta de la propia tarea.
+6. Acumular todos los errores como `ruta: mensaje`, ordenarlos y devolver `1`.
+   Devolver `2` sólo para argumentos, raíz o estructura inexistente.
+
+Ejecutar primero el test completo del contrato. No informar `PASS` mientras
+alguna invocación `main(["validate", "--root", ...])` produzca `SystemExit`.
+
 ## Preflight
 
 | Directorio | Comando exacto | Código esperado |
@@ -83,4 +114,4 @@ se habilita TASK-004.
 
 ## Handoff
 
-Bloqueada automáticamente tras tres rondas; consultar los logs del job.
+Reabierta con una pista focalizada para tres nuevas rondas.

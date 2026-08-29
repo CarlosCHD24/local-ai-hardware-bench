@@ -9,6 +9,7 @@ base_branch="${HERMES_BASE_BRANCH:?HERMES_BASE_BRANCH is required}"
 base_commit="${HERMES_BASE_COMMIT:?HERMES_BASE_COMMIT is required}"
 worktree_root="${HERMES_WORKTREE_ROOT:?HERMES_WORKTREE_ROOT is required}"
 remote="${HERMES_REMOTE:-origin}"
+start_task="${HERMES_START_TASK:-TASK-002}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 prepare_script="$script_dir/prepare_hermes_task.sh"
 
@@ -24,12 +25,20 @@ fail() {
 }
 
 main() {
-    local task_id task_job_dir manifest worktree worker accepted work_branch
+    local task_id task_job_dir manifest worktree worker accepted work_branch started=0
     mkdir -p "$sequence_job_dir"
     test -x "$prepare_script" || fail 'task preparation script is unavailable'
+    case "$start_task" in
+        TASK-002|TASK-003|TASK-004|TASK-005) ;;
+        *) fail "invalid start task: $start_task" ;;
+    esac
     printf 'RUNNING PREPARATION\n' >"$sequence_job_dir/state"
 
     for task_id in TASK-002 TASK-003 TASK-004 TASK-005; do
+        if test "$task_id" = "$start_task"; then
+            started=1
+        fi
+        test "$started" -eq 1 || continue
         task_job_dir="$sequence_job_dir/$task_id"
         printf 'PREPARING %s\n' "$task_id" >"$sequence_job_dir/state"
         env HERMES_REPO_DIR="$repo_dir" \
@@ -63,7 +72,7 @@ main() {
         printf 'ACCEPTED %s %s\n' "$task_id" "$accepted" >"$sequence_job_dir/state"
     done
 
-    printf 'COMPLETE TASK-002 TASK-003 TASK-004 TASK-005 %s\n' "$base_commit" \
+    printf 'COMPLETE FROM %s THROUGH TASK-005 %s\n' "$start_task" "$base_commit" \
         >"$sequence_job_dir/state"
 }
 
