@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
-| Owner | — |
+| Status | `in_progress` |
+| Owner | Hermes |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-28T22:52:58Z |
+| Updated | 2026-08-29T08:36:54Z |
 | Depends on | TASK-001 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -49,7 +49,7 @@ Formato válido literal:
 ```markdown
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `in_progress` |
 ```
 
 Formato inválido literal, que debe lanzar `TableFormatError`:
