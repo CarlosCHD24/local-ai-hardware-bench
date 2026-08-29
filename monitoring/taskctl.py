@@ -68,6 +68,7 @@ def validate_task_file(path: Path, index: dict) -> list[str]:
     if "||" in content:
         errors.append("tabla: formato inválido: celdas vacías no permitidas (||)")
 
+    # Limpiar backticks del estado antes de validar
     # Validar estado
     if status not in VALID_STATES:
         errors.append(f"estado: '{status}' no válido. Debe ser uno de: {', '.join(sorted(VALID_STATES))}")
@@ -117,7 +118,10 @@ def main(argv=None):
         prog="taskctl",
         description="Validador del tablero de tareas"
     )
-    parser.add_argument(
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    validate_parser = subparsers.add_parser("validate")
+    validate_parser.add_argument(
         "--root",
         type=str,
         default=".",
@@ -125,6 +129,10 @@ def main(argv=None):
     )
 
     args = parser.parse_args(argv)
+
+    if args.command != "validate":
+        parser.error(f"Comando desconocido: {args.command}")
+
     root = Path(args.root)
 
     # Validar que la raíz existe
@@ -161,12 +169,14 @@ def main(argv=None):
                 if in_table and line.startswith("|") and "|" in line:
                     # Parsear fila del índice
                     cells = [c.strip() for c in line.split("|")]
-                    if len(cells) >= 5:
+                    if len(cells) >= 6:
                         task_id = cells[1]
-                        slug = cells[3]
-                        status = cells[2]
-                        owner = cells[3]
-                        depends = cells[4]
+                        # Extraer slug del enlace: [título](tasks/slug.md) -> slug
+                        link = cells[2].split("]")[1]  # Extraer enlace: (tasks/slug.md)
+                        slug = link[1:].split("tasks/")[1].rsplit(".md")[0]  # Extraer slug
+                        status = cells[3].strip().strip("`")  # Quitar backticks
+                        owner = cells[4]
+                        depends = cells[5]
                         index[task_id] = slug
         except Exception as e:
             print(f"Error al leer TASKS.md: {e}", file=sys.stderr)
@@ -175,7 +185,7 @@ def main(argv=None):
     # Descubrir tareas en orden
     for f in sorted(tasks_dir.iterdir()):
         if f.is_file() and f.suffix == ".md":
-            tasks[f] = True
+            tasks[f] = f
 
     # Validar cada archivo de tarea
     all_errors = []
