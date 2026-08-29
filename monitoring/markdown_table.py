@@ -48,27 +48,21 @@ def parse_first_table(text: str) -> tuple[list[str], list[list[str]]]:
 
     separator = lines[separator_line_idx].strip()
 
-    # Eliminar pipes del separador para validar el contenido
-    separator_content = separator.replace('|', '')
-
-    # Validar separador: debe ser solo guiones con dos puntos opcionales
-    # Patrón: ^:?-{3,}:?$ permite ---, :---, ---:, :---:
-    if not re.match(r'^:?-{3,}:?$', separator_content):
-        raise TableFormatError(f"Separador de tabla inválido: {separator!r}")
-
-    # Extraer cabeceras
+    # Extraer cabeceras primero para obtener num_columns
     header_cells = _parse_cells(lines[header_line_idx])
     num_columns = len(header_cells)
     if num_columns < 2:
         raise TableFormatError("La tabla debe tener al menos 2 columnas")
 
-    # Contar bloques de separador: el separador original debe tener la forma |bloque1|bloque2|...|
-    # Ej: |---|:---:| → bloques son "---" y ":---:" → 2 bloques
-    # Contamos los bloques separando por '|' y filtrando espacios vacíos
+    # Validar separador: dividir por '|' y validar cada bloque individualmente
+    # Cada bloque debe coincidir con ^:?-{3,}:?$ (ej: ---, :---, ---:, :---:)
     separator_blocks = re.split(r'\|', separator)
     separator_blocks = [b.strip() for b in separator_blocks if b.strip()]
     if len(separator_blocks) != num_columns:
         raise TableFormatError(f"Separador de tabla inválido: número de bloques ({len(separator_blocks)}) != columnas ({num_columns})")
+    for block in separator_blocks:
+        if not re.fullmatch(r':?-{3,}:?', block):
+            raise TableFormatError(f"Separador de tabla inválido: {block!r}")
 
     # Extraer filas de datos (hasta encontrar línea vacía o no tabular)
     rows = []
@@ -107,6 +101,10 @@ def _parse_cells(line: str) -> list[str]:
     Elimina espacios exteriores de cada celda, conserva backticks y texto.
     Rechaza líneas con doble pipe (||) que indican celdas vacías no permitidas.
     """
+    # Rechazar || en la línea original antes de retirar pipes exteriores
+    if '||' in line:
+        raise TableFormatError("Formato de tabla inválido: celdas vacías no permitidas")
+
     # Eliminar pipes de los extremos
     if line.startswith('|'):
         line = line[1:]
@@ -115,10 +113,5 @@ def _parse_cells(line: str) -> list[str]:
 
     # Dividir por pipes
     cells = [cell.strip() for cell in line.split('|')]
-
-    # Validar que no haya doble pipe (||) en la línea original
-    # Esto ocurre cuando hay celdas vacías entre pipes consecutivos
-    if '||' in line:
-        raise TableFormatError("Formato de tabla inválido: celdas vacías no permitidas")
 
     return cells
