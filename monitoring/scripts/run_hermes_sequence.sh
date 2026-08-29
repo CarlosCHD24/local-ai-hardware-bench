@@ -10,9 +10,6 @@ round_limit=3
 round_timeout=720
 board="$worktree/monitoring/building/TASKS.md"
 
-mkdir -p "$job_dir"
-exec >>"$job_dir/runner.log" 2>&1
-
 write_state() {
     printf '%s\n' "$1" >"$job_dir/state"
 }
@@ -172,6 +169,11 @@ normalize_allowed_python() {
     done
 }
 
+run_check() {
+    "$@" || AUDIT_FAILED=1
+    return 0
+}
+
 audit_task() {
     local task_id="$1" audit_log="$2"
     local failed=0
@@ -180,30 +182,30 @@ audit_task() {
     intent_to_add "$task_id" >>"$audit_log" 2>&1 || failed=1
     check_allowed_paths "$task_id" >>"$audit_log" 2>&1 || failed=1
     (
-        audit_failed=0
+        AUDIT_FAILED=0
         cd "$worktree" || exit 1
         case "$task_id" in
             TASK-002)
-                python3 -m unittest monitoring.contract_tests.test_markdown_table_contract || audit_failed=1
+                run_check python3 -m unittest monitoring.contract_tests.test_markdown_table_contract
                 ;;
             TASK-003)
-                python3 -m unittest monitoring.contract_tests.test_markdown_table_contract monitoring.contract_tests.test_taskctl_contract || audit_failed=1
-                python3 -m monitoring.taskctl validate --root . || audit_failed=1
-                python3 -m monitoring.taskctl --help || audit_failed=1
+                run_check python3 -m unittest monitoring.contract_tests.test_markdown_table_contract monitoring.contract_tests.test_taskctl_contract
+                run_check python3 -m monitoring.taskctl validate --root .
+                run_check python3 -m monitoring.taskctl --help
                 ;;
             TASK-004)
-                python3 -m unittest monitoring.contract_tests.test_taskctl_contract monitoring.contract_tests.test_taskctl_transitions_contract || audit_failed=1
-                python3 -m monitoring.taskctl validate --root . || audit_failed=1
-                python3 -m monitoring.taskctl --help || audit_failed=1
+                run_check python3 -m unittest monitoring.contract_tests.test_taskctl_contract monitoring.contract_tests.test_taskctl_transitions_contract
+                run_check python3 -m monitoring.taskctl validate --root .
+                run_check python3 -m monitoring.taskctl --help
                 ;;
             TASK-005)
-                python3 -m unittest monitoring.contract_tests.test_nvidia_metrics_contract || audit_failed=1
-                python3 -m monitoring.nvidia_metrics --help || audit_failed=1
+                run_check python3 -m unittest monitoring.contract_tests.test_nvidia_metrics_contract
+                run_check python3 -m monitoring.nvidia_metrics --help
                 ;;
         esac
-        python3 -m unittest discover -s monitoring/tests -p 'test_*.py' || audit_failed=1
-        git diff --check || audit_failed=1
-        exit "$audit_failed"
+        run_check python3 -m unittest discover -s monitoring/tests -p 'test_*.py'
+        run_check git diff --check
+        exit "$AUDIT_FAILED"
     ) >>"$audit_log" 2>&1 || failed=1
     return "$failed"
 }
@@ -305,16 +307,24 @@ run_task() {
     exit 1
 }
 
-printf '[%s] Sequential Hermes job started\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-preflight
-if test "${HERMES_PREFLIGHT_ONLY:-0}" = '1'; then
-    write_state 'PREFLIGHT_OK provider=custom:local-ai model=local-agent fallback=disabled'
-    printf '[%s] Preflight-only run completed\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    exit 0
+main() {
+    mkdir -p "$job_dir"
+    exec >>"$job_dir/runner.log" 2>&1
+    printf '[%s] Sequential Hermes job started\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    preflight
+    if test "${HERMES_PREFLIGHT_ONLY:-0}" = '1'; then
+        write_state 'PREFLIGHT_OK provider=custom:local-ai model=local-agent fallback=disabled'
+        printf '[%s] Preflight-only run completed\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        return 0
+    fi
+    run_task TASK-002
+    run_task TASK-003
+    run_task TASK-004
+    run_task TASK-005
+    write_state 'COMPLETE TASK-002 TASK-003 TASK-004 TASK-005'
+    printf '[%s] Sequential Hermes job completed\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+
+if test "${BASH_SOURCE[0]}" = "$0"; then
+    main "$@"
 fi
-run_task TASK-002
-run_task TASK-003
-run_task TASK-004
-run_task TASK-005
-write_state 'COMPLETE TASK-002 TASK-003 TASK-004 TASK-005'
-printf '[%s] Sequential Hermes job completed\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
