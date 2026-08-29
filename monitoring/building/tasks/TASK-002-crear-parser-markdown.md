@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `blocked` |
+| Status | `ready` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-29T08:47:44Z |
+| Updated | 2026-08-29T08:54:12Z |
 | Depends on | TASK-001 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -49,7 +49,7 @@ Formato válido literal:
 ```markdown
 | Campo | Valor |
 |---|---|
-| Status | `blocked` |
+| Status | `sample` |
 ```
 
 Formato inválido literal, que debe lanzar `TableFormatError`:
@@ -61,6 +61,22 @@ Formato inválido literal, que debe lanzar `TableFormatError`:
 También lanza `TableFormatError` si no hay tabla, el separador es inválido, no
 hay datos o una fila tiene distinto número de columnas. No leer ni escribir
 archivos y no añadir CLI.
+
+## Pista para el reintento
+
+No validar el separador después de eliminar todos sus `|`: eso concatena las
+celdas y convierte `|---|:---:|` en un valor inválido. Usar este orden:
+
+1. Rechazar `||` en la línea original, antes de retirar los pipes exteriores.
+2. Retirar como máximo el primer y el último `|`.
+3. Dividir el interior por `|` y aplicar `strip()` a cada celda.
+4. Exigir el mismo número de celdas que en la cabecera.
+5. Validar cada celda separadora por separado con
+   `re.fullmatch(r":?-{3,}:?", cell)`.
+
+Eliminar la validación global basada en `separator.replace("|", "")`. Después
+de cada cambio ejecutar el test de contrato completo; no afirmar que está
+corregido sin observar código de salida `0`.
 
 ## Preflight
 
@@ -94,4 +110,4 @@ marcar la tarea como terminada.
 
 ## Handoff
 
-Bloqueada automáticamente tras tres rondas; consultar los logs del job.
+Reabierta con una pista focalizada para tres nuevas rondas.

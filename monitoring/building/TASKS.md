@@ -8,7 +8,7 @@ en el documento de cada tarea.
 | ID | Tarea | Estado | Owner | Depende de |
 |---|---|---|---|---|
 | TASK-001 | [Crear comprobador seguro de métricas](tasks/TASK-001-crear-comprobador-metricas.md) | `done` | — | — |
-| TASK-002 | [Crear parser de tablas Markdown](tasks/TASK-002-crear-parser-markdown.md) | `blocked` | — | TASK-001 |
+| TASK-002 | [Crear parser de tablas Markdown](tasks/TASK-002-crear-parser-markdown.md) | `ready` | — | TASK-001 |
 | TASK-003 | [Crear validador del tablero](tasks/TASK-003-crear-validador-tablero.md) | `ready` | — | TASK-002 |
 | TASK-004 | [Automatizar transiciones de tareas](tasks/TASK-004-automatizar-transiciones.md) | `ready` | — | TASK-003 |
 | TASK-005 | [Crear colector de métricas NVIDIA](tasks/TASK-005-crear-colector-nvidia.md) | `ready` | — | TASK-004 |
