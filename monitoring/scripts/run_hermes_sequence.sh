@@ -82,7 +82,8 @@ load_manifest() {
 
 verify_git_manifest() {
     local task_id="$1" mode="$2" actual_branch actual_head remote_head
-    git -C "$worktree" fetch --prune "$manifest_remote" || return 1
+    git -C "$worktree" fetch "$manifest_remote" \
+        "refs/heads/$manifest_work_branch:refs/remotes/$manifest_remote/$manifest_work_branch" || return 1
     actual_branch="$(git -C "$worktree" branch --show-current)" || return 1
     actual_head="$(git -C "$worktree" rev-parse HEAD)" || return 1
     remote_head="$(git -C "$worktree" rev-parse "$manifest_remote/$manifest_work_branch^{commit}")" || return 1
@@ -390,7 +391,8 @@ make_prompt() {
         printf 'Trabaja sólo en el directorio recibido mediante --in. No busques otros repositorios. '
         printf 'El proveedor autorizado es exclusivamente local-agent.\n\n'
         printf 'Lee el manifiesto %s. La primera herramienta es `pwd`. Después ejecuta exactamente:\n' "$job_manifest"
-        printf -- '- `git fetch --prune %s`\n' "$manifest_remote"
+        printf -- '- `git fetch %s refs/heads/%s:refs/remotes/%s/%s`\n' \
+            "$manifest_remote" "$manifest_work_branch" "$manifest_remote" "$manifest_work_branch"
         printf -- '- `test "$(git branch --show-current)" = "%s"`\n' "$manifest_work_branch"
         printf -- '- `test "$(git rev-parse HEAD)" = "%s"`\n' "$manifest_execution_commit"
         printf -- '- `test "$(git rev-parse %s/%s)" = "%s"`\n' \
@@ -437,7 +439,8 @@ publish_task_result() {
     current="$(git -C "$worktree" rev-parse HEAD)" || fail 'cannot resolve result commit'
     git -C "$worktree" push "$manifest_remote" "$manifest_work_branch" || \
         fail 'result branch could not be published'
-    git -C "$worktree" fetch --prune "$manifest_remote" || \
+    git -C "$worktree" fetch "$manifest_remote" \
+        "refs/heads/$manifest_work_branch:refs/remotes/$manifest_remote/$manifest_work_branch" || \
         fail 'published branch could not be verified'
     remote_head="$(git -C "$worktree" rev-parse "$manifest_remote/$manifest_work_branch^{commit}")" || \
         fail 'published branch is unavailable'

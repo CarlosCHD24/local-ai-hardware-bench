@@ -147,6 +147,9 @@ El preparador y el worker se ejecutan como procesos del orquestador, no como
 herramientas decididas por el modelo. Hermes recibe únicamente el worktree, el
 manifiesto y el prompt de su tarea.
 
+Todos los `fetch` usan un refspec explícito de la rama autorizada. El flujo no
+depende de que `remote.origin.fetch` incluya todas las ramas.
+
 ## Salida final obligatoria
 
 Hermes devuelve únicamente evidencia breve:

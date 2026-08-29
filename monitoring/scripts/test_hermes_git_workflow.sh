@@ -26,6 +26,8 @@ git -C "$source_repo" commit -q -m 'Published design'
 git -C "$source_repo" remote add origin "$remote_repo"
 git -C "$source_repo" push -q -u origin design
 base_commit="$(git -C "$source_repo" rev-parse HEAD)"
+git -C "$source_repo" config --replace-all remote.origin.fetch \
+    '+refs/tags/test-only:refs/tags/test-only'
 
 env HERMES_REPO_DIR="$source_repo" \
     HERMES_JOB_DIR="$job_dir" \

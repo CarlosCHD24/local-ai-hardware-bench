@@ -89,7 +89,8 @@ main() {
     validate_inputs
 
     printf 'PREPARING %s\n' "$task_id" >"$job_dir/state"
-    git -C "$repo_dir" fetch --prune "$remote" || fail 'Git fetch failed'
+    git -C "$repo_dir" fetch "$remote" \
+        "refs/heads/$base_branch:refs/remotes/$remote/$base_branch" || fail 'Git fetch failed'
     remote_base="$(git -C "$repo_dir" rev-parse "$remote/$base_branch^{commit}")" || \
         fail 'remote base branch is unavailable'
     test "$remote_base" = "$base_commit" || fail 'remote base branch does not match base commit'
@@ -99,7 +100,7 @@ main() {
     test ! -e "$worktree" || fail 'task worktree already exists'
     git -C "$repo_dir" show-ref --verify --quiet "refs/heads/$work_branch" && \
         fail 'local work branch already exists'
-    git -C "$repo_dir" show-ref --verify --quiet "refs/remotes/$remote/$work_branch" && \
+    git -C "$repo_dir" ls-remote --exit-code --heads "$remote" "$work_branch" >/dev/null 2>&1 && \
         fail 'remote work branch already exists'
 
     git -C "$repo_dir" worktree add -b "$work_branch" "$worktree" "$base_commit" || \
@@ -114,7 +115,9 @@ main() {
     execution_commit="$(git -C "$worktree" rev-parse HEAD)" || fail 'execution commit is unavailable'
     git -C "$worktree" push --set-upstream "$remote" "$work_branch" || \
         fail 'execution branch could not be published'
-    git -C "$worktree" fetch --prune "$remote" || fail 'published execution branch could not be fetched'
+    git -C "$worktree" fetch "$remote" \
+        "refs/heads/$work_branch:refs/remotes/$remote/$work_branch" || \
+        fail 'published execution branch could not be fetched'
     remote_execution="$(git -C "$worktree" rev-parse "$remote/$work_branch^{commit}")" || \
         fail 'published execution branch is unavailable'
     test "$remote_execution" = "$execution_commit" || \

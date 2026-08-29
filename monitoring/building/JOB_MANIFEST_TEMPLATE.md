@@ -39,7 +39,7 @@ a los siguientes:
 
 ```bash
 pwd
-git fetch --prune origin
+git fetch origin refs/heads/hermes/TASK-NNN/JOB-ID:refs/remotes/origin/hermes/TASK-NNN/JOB-ID
 git branch --show-current
 git rev-parse HEAD
 git rev-parse origin/hermes/TASK-NNN/JOB-ID
