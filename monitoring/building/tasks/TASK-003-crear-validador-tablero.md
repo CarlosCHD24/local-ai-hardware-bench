@@ -8,11 +8,12 @@
 | Updated | 2026-08-28T22:52:58Z |
 | Depends on | TASK-002 |
 | Execution | `orchestrated` |
+| Execution manifest | Obligatorio por job |
 | Profile | `monitoringworker` |
 | Budget | 12 turns / 600 s / 2048 output / reasoning none |
 | Rounds | 3 |
 | Contract tests | `monitoring.contract_tests.test_taskctl_contract` |
-| Working directory | Repository root |
+| Working directory | Raíz exacta indicada en el manifiesto |
 
 ## Objetivo
 

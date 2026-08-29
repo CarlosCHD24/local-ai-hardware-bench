@@ -8,6 +8,7 @@
 | Updated | AAAA-MM-DDTHH:MM:SSZ |
 | Depends on | — |
 | Execution | `orchestrated` |
+| Execution manifest | Generado desde `building/JOB_MANIFEST_TEMPLATE.md` |
 | Profile | `monitoringworker` |
 | Budget | 12 turns / 600 s / 2048 output / reasoning none |
 | Rounds | 3 |
@@ -23,6 +24,7 @@ Una frase que describa el resultado observable de esta tarea.
 - Documentos o rutas que el ejecutor necesita leer.
 - Decisiones ya tomadas que no debe volver a abrir.
 - No leer auditorías históricas ni otros worktrees.
+- Validar primero el manifiesto del job; no trabajar sobre una rama móvil.
 
 ## Alcance
 
@@ -43,6 +45,10 @@ No incluye:
 - Ejemplo literal válido y ejemplo literal inválido para cada formato.
 
 ## Preflight
+
+El preflight Git exacto se genera en el manifiesto. Debe pasar antes de estos
+controles específicos y demostrar rama, commits, referencia remota y worktree
+limpio.
 
 | Directorio | Comando exacto | Código esperado |
 |---|---|---:|

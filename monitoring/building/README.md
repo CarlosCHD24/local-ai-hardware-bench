@@ -13,14 +13,18 @@ copiarán logs extensos ni explicaciones generales que ya estén en
 
 ## Fuentes de verdad
 
-1. `../README.md` define el producto y su arquitectura.
-2. El fichero individual de una tarea define su alcance y estado real.
-3. [`TASKS.md`](TASKS.md) es el índice resumido de todas las tareas.
-4. [`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md) define el contrato de
+1. El repositorio Git remoto contiene la versión publicable del proyecto.
+2. `../README.md` define el producto y su arquitectura.
+3. El fichero individual de una tarea define su alcance y estado real.
+4. [`TASKS.md`](TASKS.md) es el índice resumido de todas las tareas.
+5. [`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md) define el contrato de
    ejecución del agente local.
+6. El manifiesto de cada job fija los commits y la rama exactos de esa
+   ejecución; se genera desde [`JOB_MANIFEST_TEMPLATE.md`](JOB_MANIFEST_TEMPLATE.md).
 
-Si el índice y una tarea discrepan, manda el fichero individual. El siguiente
-agente corregirá el índice antes de continuar.
+Si el índice y una tarea discrepan, manda el fichero individual. El
+orquestador corrige el índice antes de una ejecución orquestada; un agente no
+orquestado lo corrige antes de continuar.
 
 ## Estructura
 
@@ -28,6 +32,7 @@ agente corregirá el índice antes de continuar.
 building/
 ├── README.md
 ├── HERMES_TASK_GUIDE.md
+├── JOB_MANIFEST_TEMPLATE.md
 ├── TASKS.md
 ├── TASK_TEMPLATE.md
 ├── audits/
@@ -81,8 +86,10 @@ En tareas con `Execution: orchestrated` debe:
 - validar dependencias y preflight;
 - ejecutar el preflight literal de la tarea sobre el baseline limpio antes de
   reclamarla;
-- crear el worktree y fijar la raíz autorizada;
-- reclamar y actualizar la tarea antes de invocar Hermes;
+- publicar documentación y contratos en un commit base remoto;
+- crear una rama y un worktree exclusivos desde ese commit;
+- reclamar la tarea, crear el commit de ejecución y publicar la rama;
+- generar un manifiesto con commits, rama, raíz y verificaciones exactos;
 - limitar perfil, herramientas, turnos, salida y tiempo;
 - conservar candidato y telemetría;
 - auditar todas las salidas, incluso sin `PASS`;
@@ -98,6 +105,25 @@ En tareas con `Execution: orchestrated` debe:
 Hermes no modifica los documentos de workflow de `building/` en este modo. Su
 autonomía se limita a los archivos técnicos declarados y a ejecutar sus
 verificaciones.
+
+## Git como fuente de verdad
+
+Una rama móvil no es una entrada reproducible. Cada job queda ligado a:
+
+- `base_commit`: documentación y contratos publicados por el diseñador;
+- `work_branch`: rama exclusiva creada por el orquestador;
+- `execution_commit`: tarea reclamada y worktree todavía limpio;
+- `accepted_commit`: resultado técnico y estado aceptados por el auditor.
+
+El orquestador tiene credencial de escritura. Hermes sólo puede hacer `fetch`.
+Antes de trabajar verifica que `HEAD` y la referencia remota de `work_branch`
+coinciden con `execution_commit`, que éste desciende de `base_commit` y que el
+worktree está limpio. Una discrepancia produce `CONFIG_ERROR`; Hermes no usa
+`pull`, no resuelve conflictos y no busca otra copia del repositorio.
+
+Tras una auditoría correcta, el orquestador crea y publica `accepted_commit`.
+La siguiente tarea recibe una rama nueva basada en ese commit. Publicar una
+rama de trabajo no equivale a fusionarla en la rama principal.
 
 ## Tamaño de una tarea
 
@@ -182,6 +208,9 @@ En `Execution: orchestrated`, los pasos 3, 4, 7 y 8 pertenecen al orquestador.
 Hermes no toca la tarea ni el índice y entrega el formato definido en
 [`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md).
 
+El orquestador registra los pasos 3 y 4 en `execution_commit` antes de invocar
+a Hermes. Así el agente empieza siempre desde un `HEAD` limpio y verificable.
+
 Si la tarea crea archivos nuevos, antes de `git diff --check` usa
 `git add -N -- ruta1 ruta2` únicamente con las rutas permitidas. Esto añade
 intención de seguimiento sin guardar contenido y evita que Git omita esos
@@ -228,6 +257,10 @@ fallos exactos a una nueva sesión. Después de la tercera ronda, repite esa
 limpieza, marca `blocked`, limpia `Owner` y conserva candidato y artefactos para
 comparación.
 
+Si la auditoría pasa, sólo el orquestador crea y publica el commit aceptado. El
+auditor registra su SHA en el manifiesto o informe del job antes de habilitar la
+siguiente dependencia.
+
 El resultado de una verificación se resume con evidencia corta: comando, estado
 y dato relevante. Los logs completos deben permanecer fuera del documento.
 
@@ -250,8 +283,10 @@ y dato relevante. Los logs completos deben permanecer fuera del documento.
 4. La tarea elegida y los ficheros de sus dependencias.
 5. Sólo después, los archivos de implementación relevantes.
 
-Para Hermes, leer además [`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md) y no
-leer auditorías antiguas salvo petición expresa del orquestador.
+Para Hermes, el orden empieza fuera del worktree: leer el manifiesto, ejecutar
+su preflight Git y sólo entonces seguir esta lista. Leer además
+[`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md) y no leer auditorías antiguas
+salvo petición expresa del orquestador.
 
 Este orden permite continuar el proyecto con contexto suficiente y evita que el
 estado dependa de quién realizó el trabajo anterior.

@@ -334,6 +334,8 @@ monitoring/
 ├── README.md
 ├── building/
 │   ├── README.md
+│   ├── HERMES_TASK_GUIDE.md
+│   ├── JOB_MANIFEST_TEMPLATE.md
 │   ├── TASKS.md
 │   ├── TASK_TEMPLATE.md
 │   └── tasks/

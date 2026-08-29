@@ -11,8 +11,11 @@ para corregir tests que afirmaba haber corregido.
 La autonomía adecuada es técnica, no administrativa:
 
 ```text
-orquestador prepara --> Hermes implementa y verifica --> auditor decide
+diseñador publica --> orquestador fija commit --> Hermes implementa --> auditor acepta
 ```
+
+Git es la fuente de verdad. Hermes no trabaja sobre “la última versión” de una
+rama, sino sobre el `execution_commit` exacto autorizado en el manifiesto.
 
 ## Evidencia de los pilotos
 
@@ -56,12 +59,15 @@ dejarla en `draft`.
 
 El orquestador debe:
 
-- crear y fijar el worktree;
+- publicar primero documentación, tareas y contratos en `base_commit`;
+- crear una rama y un worktree exclusivos desde `base_commit`;
 - comprobar el preflight antes de reclamar la tarea;
 - ejecutar también el preflight literal de cada tarea sobre una rama limpia y
   detenerse si el baseline ya falla;
+- reclamar la tarea, crear `execution_commit` y publicar la rama limpia;
+- generar el manifiesto desde `JOB_MANIFEST_TEMPLATE.md`;
 - exigir el proveedor y modelo locales y prohibir fallback externo;
-- reclamar la tarea y actualizar timestamps;
+- mantener estados y timestamps sin delegarlos en Hermes;
 - invocar el perfil y directorio correctos;
 - conservar telemetría y candidato;
 - ejecutar la auditoría independiente después de cada ronda, aunque la salida
@@ -75,6 +81,7 @@ El orquestador debe:
   que nunca desaparezcan al truncar la evidencia;
 - mover a cuarentena los artefactos fuera de alcance entre rondas, conservando
   una copia en el directorio del job;
+- crear y publicar `accepted_commit` sólo tras la auditoría;
 - cambiar `review` y `done`.
 
 En modo `orchestrated`, Hermes no modifica los documentos de workflow de
@@ -100,19 +107,30 @@ repair_timeout_seconds: 480
 max_tokens: 2048
 toolsets: terminal,file
 working_directory: raíz del worktree
+job_manifest: ruta absoluta generada por el orquestador
 ```
 
-Antes de modificar el tablero, el orquestador valida desde el mismo entorno
-desacoplado: ruta absoluta del ejecutable, clave no vacía, autenticación contra
-`/v1/models`, una inferencia mínima y ausencia de fallback. Cualquier `401`,
-cambio de proveedor o fallo de inferencia detiene el trabajo sin reclamarlo.
+Antes de reclamar la tarea, el orquestador valida desde el mismo entorno
+desacoplado: Git remoto accesible, baseline limpio, ruta del ejecutable, clave
+no vacía, autenticación contra `/v1/models`, una inferencia mínima y ausencia
+de fallback. Cualquier discrepancia Git, `401`, cambio de proveedor o fallo de
+inferencia detiene el trabajo sin reclamarlo.
+
+Después reclama la tarea en la rama exclusiva, crea y publica
+`execution_commit` y genera el manifiesto. No inicia Hermes hasta que la
+referencia remota de la rama coincide con ese commit.
 
 Usar `hermes chat --in`; el modo one-shot no respetó de forma fiable el
 directorio ni el límite de iteraciones durante el piloto.
 
 La petición debe ordenar ejecutar sin pedir confirmación. La primera herramienta
-es `pwd`. Si no coincide con la raíz autorizada, Hermes devuelve `CONFIG_ERROR`
-y no busca otros repositorios o worktrees.
+es `pwd`; después Hermes ejecuta el bloque Git exacto del manifiesto: `fetch` y
+verificación de raíz, rama, `HEAD`, referencia remota, ascendencia y limpieza.
+Si algo no coincide, devuelve `CONFIG_ERROR` y no usa `pull`, cambia de rama,
+resuelve conflictos ni busca otros repositorios o worktrees.
+
+La credencial de Hermes es de sólo lectura. Los commits, pushes y fusiones se
+ejecutan fuera del modelo por el orquestador.
 
 ## Salida final obligatoria
 
@@ -121,6 +139,8 @@ Hermes devuelve únicamente evidencia breve:
 ```text
 RESULT: PASS | FAIL | CONFIG_ERROR
 CWD: ruta real
+BASE_COMMIT: SHA recibido
+EXECUTION_COMMIT: SHA verificado
 FILES: rutas modificadas
 CHECKS:
 - comando literal | código | resumen
@@ -142,7 +162,8 @@ rutas prohibidas. Estas últimas se guardan en cuarentena antes del siguiente
 intento para que no contaminen la reparación. Tras cada salida, el orquestador
 ejecuta siempre las verificaciones inmutables:
 
-1. Si pasan, marca `done`, crea un commit de control y habilita la dependencia.
+1. Si pasan, el auditor marca `done`; el orquestador crea y publica
+   `accepted_commit` y habilita la dependencia.
 2. Si fallan y quedan rondas, entrega a Hermes el resumen literal de fallos.
 3. Tras tres rondas fallidas, pone en cuarentena cualquier cambio prohibido,
    marca `blocked`, limpia `Owner` y conserva código permitido, evidencias y
@@ -152,6 +173,11 @@ El presupuesto interno no interrumpe necesariamente una inferencia en curso; el
 timeout externo es el único límite fuerte de tiempo de pared y prevalece. Nunca
 se reanuda una sesión que haya usado un proveedor distinto del local
 configurado.
+
+Antes de una ronda correctiva se repiten `fetch` y las comprobaciones de rama y
+SHA, pero el worktree puede contener únicamente el candidato permitido. Si la
+rama remota avanzó, el job se detiene; no integra cambios nuevos a mitad de una
+tarea. La siguiente tarea se crea desde `accepted_commit` en una rama nueva.
 
 ## Qué trabajo asignar
 
