@@ -58,6 +58,8 @@ El orquestador debe:
 
 - crear y fijar el worktree;
 - comprobar el preflight antes de reclamar la tarea;
+- ejecutar también el preflight literal de cada tarea sobre una rama limpia y
+  detenerse si el baseline ya falla;
 - exigir el proveedor y modelo locales y prohibir fallback externo;
 - reclamar la tarea y actualizar timestamps;
 - invocar el perfil y directorio correctos;
@@ -69,6 +71,10 @@ El orquestador debe:
 - eliminar mecánicamente espacios finales antes de auditar;
 - devolver a Hermes únicamente los errores del auditor y permitir como máximo
   dos rondas correctivas;
+- repetir al final del log un resumen de tests fallidos y rutas prohibidas para
+  que nunca desaparezcan al truncar la evidencia;
+- mover a cuarentena los artefactos fuera de alcance entre rondas, conservando
+  una copia en el directorio del job;
 - cambiar `review` y `done`.
 
 En modo `orchestrated`, Hermes no modifica los documentos de workflow de
@@ -128,18 +134,24 @@ no de poder analizar este texto.
 
 ## Rondas y recuperación
 
-Cada ronda parte de los archivos conservados y de un prompt nuevo. Las rondas
-correctivas no releen documentación general ni reescriben archivos completos;
-reciben sólo el candidato y un máximo de 100 líneas de auditoría. Tras cada
-salida, el orquestador ejecuta siempre las verificaciones inmutables:
+Cada ronda parte de los archivos permitidos conservados y de un prompt nuevo.
+Las rondas correctivas no releen documentación general ni reescriben archivos
+completos; reciben sólo el candidato y un máximo de 100 líneas de auditoría. El
+resumen estructurado se coloca al final para incluir siempre tests fallidos y
+rutas prohibidas. Estas últimas se guardan en cuarentena antes del siguiente
+intento para que no contaminen la reparación. Tras cada salida, el orquestador
+ejecuta siempre las verificaciones inmutables:
 
 1. Si pasan, marca `done`, crea un commit de control y habilita la dependencia.
 2. Si fallan y quedan rondas, entrega a Hermes el resumen literal de fallos.
-3. Tras tres rondas fallidas, marca `blocked`, limpia `Owner` y conserva código,
-   pruebas y logs para auditoría.
+3. Tras tres rondas fallidas, pone en cuarentena cualquier cambio prohibido,
+   marca `blocked`, limpia `Owner` y conserva código permitido, evidencias y
+   logs para auditoría.
 
-El timeout externo prevalece sobre el presupuesto interno. Nunca se reanuda una
-sesión que haya usado un proveedor distinto del local configurado.
+El presupuesto interno no interrumpe necesariamente una inferencia en curso; el
+timeout externo es el único límite fuerte de tiempo de pared y prevalece. Nunca
+se reanuda una sesión que haya usado un proveedor distinto del local
+configurado.
 
 ## Qué trabajo asignar
 
