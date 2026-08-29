@@ -169,7 +169,7 @@ def main(argv=None):
                 if in_table and line.startswith("|") and "|" in line:
                     # Parsear fila del índice
                     cells = [c.strip() for c in line.split("|")]
-                    if len(cells) >= 6:
+                    if len(cells) >= 7:
                         task_id = cells[1]
                         # Extraer slug del enlace: [título](tasks/slug.md) -> slug
                         link = cells[2].split("]")[1]  # Extraer enlace: (tasks/slug.md)
@@ -178,9 +178,13 @@ def main(argv=None):
                         owner = cells[4]
                         depends = cells[5]
                         index[task_id] = slug
+                    elif len(cells) >= 2 and cells[1]:
+                        # Fila incompleta: registrar task_id sin slug
+                        task_id = cells[1]
+                        index[task_id] = None
         except Exception as e:
             print(f"Error al leer TASKS.md: {e}", file=sys.stderr)
-            return 2
+            return 1
 
     # Descubrir tareas en orden
     for f in sorted(tasks_dir.iterdir()):

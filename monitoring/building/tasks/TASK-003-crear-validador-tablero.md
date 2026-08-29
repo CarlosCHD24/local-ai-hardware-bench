@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `in_progress` |
-| Owner | Hermes |
+| Status | `blocked` |
+| Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-29T11:09:09Z |
+| Updated | 2026-08-29T11:19:55Z |
 | Depends on | TASK-002 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
