@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `in_progress` |
-| Owner | Hermes |
+| Status | `blocked` |
+| Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-29T11:27:56Z |
+| Updated | 2026-08-29T11:40:15Z |
 | Depends on | TASK-003 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -71,4 +71,4 @@ contra el repositorio real.
 
 ## Handoff
 
-Sin trabajo pendiente ni bloqueos.
+Bloqueada automáticamente tras tres rondas; consultar los logs del job.

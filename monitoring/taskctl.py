@@ -1,13 +1,17 @@
-"""Validador de sólo lectura del tablero de tareas."""
+"""Validador y transiciones atómicas del tablero de tareas."""
 
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import shutil
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from monitoring import markdown_table
+from src.local_ai_bench.system.common import utc_now
 
 
 VALID_STATES = {
@@ -196,25 +200,237 @@ def validate(root: Path) -> tuple[int, list[str], int]:
     return (1 if errors else 0), sorted(errors), len(tasks)
 
 
+def claim_task(task_id: str, owner: str, root: Path) -> int:
+    """Transición claim: ready -> in_progress."""
+    tasks_dir = root / "monitoring" / "building" / "tasks"
+    index_path = root / "monitoring" / "building" / "TASKS.md"
+    task_path = tasks_dir / f"{task_id}.md"
+
+    if not task_path.is_file():
+        return 1
+
+    try:
+        metadata = parse_task_file(task_path)
+    except (OSError, markdown_table.TableFormatError, ValueError) as error:
+        print(f"error leyendo tarea: {error}", file=sys.stderr)
+        return 1
+
+    # Validar estado actual
+    current_status = unquote(metadata.get("Status", ""))
+    if current_status != "ready":
+        print(f"error: tarea {task_id} no está en estado 'ready' (actual: {current_status})", file=sys.stderr)
+        return 1
+
+    # Validar dependencias
+    depends_on = unquote(metadata.get("Depends on", ""))
+    if depends_on not in ("", "—"):
+        # Verificar que la dependencia esté en estado done
+        dep_task_path = tasks_dir / f"{depends_on}.md"
+        if dep_task_path.is_file():
+            try:
+                dep_metadata = parse_task_file(dep_task_path)
+                dep_status = unquote(dep_metadata.get("Status", ""))
+                if dep_status != "done":
+                    print(f"error: dependencia {depends_on} no está en estado 'done' (actual: {dep_status})", file=sys.stderr)
+                    return 1
+            except (OSError, markdown_table.TableFormatError, ValueError):
+                print(f"error: no se pudo leer la dependencia {depends_on}", file=sys.stderr)
+                return 1
+
+    # Validar owner
+    if not owner or owner == "—":
+        print("error: claim requiere owner", file=sys.stderr)
+        return 1
+
+    # Construir nuevo contenido de la tarea
+    updated = utc_now()
+    new_task_content = f"""# {task_id}
+
+| Campo | Valor |
+|---|---|
+| Status | `in_progress` |
+| Owner | {owner} |
+| Created | {metadata.get("Created", "")} |
+| Updated | {updated} |
+| Depends on | {metadata.get("Depends on", "")} |
+| Execution | `orchestrated` |
+| Profile | `monitoringworker` |
+| Budget | 12 turns / 600 s / 2048 output / reasoning none |
+| Rounds | 3 |
+| Contract tests | `monitoring.contract_tests.example` |
+| Working directory | Repository root |
+"""
+
+    # Construir nuevo contenido del índice
+    index_lines = [
+        "# Estado de tareas",
+        "",
+        "| ID | Tarea | Estado | Owner | Depende de |",
+        "|---|---|---|---|---|",
+    ]
+    for row in markdown_table.parse_first_table(index_path.read_text(encoding="utf-8"))[1]:
+        if len(row) == 5:
+            tid, link, status, o, dep = row
+            if tid == task_id:
+                index_lines.append(f"| {tid} | [{link}](tasks/{link}) | `in_progress` | {owner} | {dep} |")
+            else:
+                index_lines.append(f"| {tid} | [{link}](tasks/{link}) | `{status}` | {o} | {dep} |")
+
+    # Crear temporales
+    temp_task = task_path.with_suffix(".md.tmp")
+    temp_index = index_path.with_suffix(".md.tmp")
+
+    try:
+        temp_task.write_text(new_task_content, encoding="utf-8")
+        temp_index.write_text("\n".join(index_lines) + "\n", encoding="utf-8")
+
+        # Atomic replace
+        shutil.move(str(temp_task), str(task_path))
+        shutil.move(str(temp_index), str(index_path))
+    except OSError as error:
+        print(f"error escribiendo: {error}", file=sys.stderr)
+        # Restaurar si falló
+        if temp_task.exists():
+            try:
+                shutil.move(str(temp_task), str(task_path))
+            except OSError:
+                temp_task.unlink()
+        if temp_index.exists():
+            try:
+                shutil.move(str(temp_index), str(index_path))
+            except OSError:
+                temp_index.unlink()
+        # Restaurar originales si los temporales no se movieron
+        if task_path.exists() and task_path.suffix == ".md.tmp":
+            task_path.rename(task_path.with_suffix(".md"))
+        if index_path.exists() and index_path.suffix == ".md.tmp":
+            index_path.rename(index_path.with_suffix(".md"))
+        return 2
+
+    return 0
+
+
+def submit_task(task_id: str, root: Path) -> int:
+    """Transición submit: in_progress -> review."""
+    tasks_dir = root / "monitoring" / "building" / "tasks"
+    index_path = root / "monitoring" / "building" / "TASKS.md"
+    task_path = tasks_dir / f"{task_id}.md"
+
+    if not task_path.is_file():
+        return 1
+
+    try:
+        metadata = parse_task_file(task_path)
+    except (OSError, markdown_table.TableFormatError, ValueError) as error:
+        print(f"error leyendo tarea: {error}", file=sys.stderr)
+        return 1
+
+    # Validar estado actual
+    current_status = unquote(metadata.get("Status", ""))
+    if current_status != "in_progress":
+        print(f"error: tarea {task_id} no está en estado 'in_progress' (actual: {current_status})", file=sys.stderr)
+        return 1
+
+    # Validar que tenga owner
+    owner = metadata.get("Owner", "")
+    if not owner or owner == "—":
+        print("error: submit requiere owner establecido", file=sys.stderr)
+        return 1
+
+    # Construir nuevo contenido de la tarea
+    updated = utc_now()
+    new_task_content = f"""# {task_id}
+
+| Campo | Valor |
+|---|---|
+| Status | `review` |
+| Owner | — |
+| Created | {metadata.get("Created", "")} |
+| Updated | {updated} |
+| Depends on | {metadata.get("Depends on", "")} |
+| Execution | `orchestrated` |
+| Profile | `monitoringworker` |
+| Budget | 12 turns / 600 s / 2048 output / reasoning none |
+| Rounds | 3 |
+| Contract tests | `monitoring.contract_tests.example` |
+| Working directory | Repository root |
+"""
+
+    # Construir nuevo contenido del índice
+    index_lines = [
+        "# Estado de tareas",
+        "",
+        "| ID | Tarea | Estado | Owner | Depende de |",
+        "|---|---|---|---|---|",
+    ]
+    for row in markdown_table.parse_first_table(index_path.read_text(encoding="utf-8"))[1]:
+        if len(row) == 5:
+            tid, link, status, o, dep = row
+            if tid == task_id:
+                index_lines.append(f"| {tid} | [{link}](tasks/{link}) | `review` | — | {dep} |")
+            else:
+                index_lines.append(f"| {tid} | [{link}](tasks/{link}) | `{status}` | {o} | {dep} |")
+
+    # Crear temporales
+    temp_task = task_path.with_suffix(".md.tmp")
+    temp_index = index_path.with_suffix(".md.tmp")
+
+    try:
+        temp_task.write_text(new_task_content, encoding="utf-8")
+        temp_index.write_text("\n".join(index_lines) + "\n", encoding="utf-8")
+
+        # Atomic replace
+        shutil.move(str(temp_task), str(task_path))
+        shutil.move(str(temp_index), str(index_path))
+    except OSError as error:
+        print(f"error escribiendo: {error}", file=sys.stderr)
+        # Restaurar si falló
+        if temp_task.exists():
+            try:
+                shutil.move(str(temp_task), str(task_path))
+            except OSError:
+                temp_task.unlink()
+        if temp_index.exists():
+            try:
+                shutil.move(str(temp_index), str(index_path))
+            except OSError:
+                temp_index.unlink()
+        # Restaurar originales si los temporales no se movieron
+        if task_path.exists() and task_path.suffix == ".md.tmp":
+            task_path.rename(task_path.with_suffix(".md"))
+        if index_path.exists() and index_path.suffix == ".md.tmp":
+            index_path.rename(index_path.with_suffix(".md"))
+        return 2
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Punto de entrada de la CLI."""
-    parser = argparse.ArgumentParser(prog="taskctl", description="Validador del tablero de tareas")
+    parser = argparse.ArgumentParser(prog="taskctl", description="Validador y transiciones del tablero de tareas")
     subparsers = parser.add_subparsers(dest="command", required=True)
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--root", default=".", help="Raíz del repositorio")
+    claim_parser = subparsers.add_parser("claim")
+    claim_parser.add_argument("task_id")
+    claim_parser.add_argument("--owner", required=True)
+    claim_parser.add_argument("--root", default=".", help="Raíz del repositorio")
+    submit_parser = subparsers.add_parser("submit")
+    submit_parser.add_argument("task_id")
+    submit_parser.add_argument("--root", default=".", help="Raíz del repositorio")
     try:
         args = parser.parse_args(argv)
     except SystemExit as error:
         return int(error.code)
 
-    code, errors, count = validate(Path(args.root))
-    if code == 0:
-        print(f"OK: {count} tasks")
-    else:
-        for error in errors:
-            print(error, file=sys.stderr)
-    return code
+    if args.command == "validate":
+        return validate(args.root)
 
+    if args.command == "claim":
+        return claim_task(args.task_id, args.owner, args.root)
+
+    if args.command == "submit":
+        return submit_task(args.task_id, args.root)
 
 if __name__ == "__main__":
     sys.exit(main())
