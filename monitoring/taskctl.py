@@ -1,4 +1,6 @@
-"""Validador del tablero de tareas."""
+"""Validador de sólo lectura del tablero de tareas."""
+
+from __future__ import annotations
 
 import argparse
 import re
@@ -8,208 +10,210 @@ from pathlib import Path
 from monitoring import markdown_table
 
 
-# Estados válidos
-VALID_STATES = {"draft", "ready", "in_progress", "blocked", "review", "done", "cancelled"}
+VALID_STATES = {
+    "draft",
+    "ready",
+    "in_progress",
+    "blocked",
+    "review",
+    "done",
+    "cancelled",
+}
+TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+TASK_NAME_RE = re.compile(r"^(TASK-\d{3})-(.+)\.md$")
+TASK_LINK_RE = re.compile(r"^\[([^\]]+)\]\((tasks/(TASK-\d{3})-[^)]+\.md)\)$")
+TASK_FIELDS = (
+    "Status",
+    "Owner",
+    "Created",
+    "Updated",
+    "Depends on",
+    "Execution",
+    "Profile",
+    "Budget",
+    "Rounds",
+    "Contract tests",
+    "Working directory",
+)
+INDEX_HEADER = ["ID", "Tarea", "Estado", "Owner", "Depende de"]
 
-# Patrón para timestamps UTC ISO 8601
-ISO8601_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+def unquote(value: str) -> str:
+    """Elimina un único par de backticks Markdown, si lo hay."""
+    if len(value) >= 2 and value.startswith("`") and value.endswith("`"):
+        return value[1:-1]
+    return value
 
 
-def parse_task_file(path: Path) -> dict:
-    """
-    Parsea un archivo de tarea y extrae los metadatos de la tabla.
-
-    Devuelve un dict con los campos o lanza TableFormatError si el formato es inválido.
-    """
-    content = path.read_text(encoding="utf-8")
-
-    # Extraer la primera tabla
-    header, rows = markdown_table.parse_first_table(content)
-
-    # Validar cabeceras
+def parse_task_file(path: Path) -> dict[str, str]:
+    """Lee la tabla de metadatos de una tarea usando el parser compartido."""
+    header, rows = markdown_table.parse_first_table(path.read_text(encoding="utf-8"))
     if header != ["Campo", "Valor"]:
-        raise ValueError(f"Tabla inválida: cabeceras '{header}' != ['Campo', 'Valor']")
+        raise ValueError("cabecera de metadatos inválida")
 
-    # Construir el dict de metadatos
-    metadata = {}
+    metadata: dict[str, str] = {}
     for row in rows:
         if len(row) != 2:
-            raise ValueError(f"Fila inválida: {row}")
+            raise ValueError("fila de metadatos inválida")
         key, value = row
+        if key in metadata:
+            raise ValueError(f"campo duplicado: {key}")
         metadata[key] = value
-
     return metadata
 
 
-def validate_task_file(path: Path, index: dict) -> list[str]:
-    """
-    Valida un archivo de tarea individual.
+def task_errors(path: Path, metadata: dict[str, str], known_ids: set[str]) -> list[str]:
+    """Devuelve las incoherencias del documento de una tarea."""
+    errors: list[str] = []
+    task_match = TASK_NAME_RE.fullmatch(path.name)
+    task_id = task_match.group(1) if task_match else path.stem
 
-    Devuelve una lista de errores (o lista vacía si es válido).
-    """
-    errors = []
+    for field in TASK_FIELDS:
+        if field not in metadata:
+            errors.append(f"falta el campo {field}")
 
-    try:
-        metadata = parse_task_file(path)
-    except markdown_table.TableFormatError as e:
-        return [f"tabla: {e}"]
-    except ValueError as e:
-        return [f"formato: {e}"]
-
-    # Extraer campos
-    status = metadata.get("Status", "")
+    status = unquote(metadata.get("Status", ""))
     owner = metadata.get("Owner", "")
-    created = metadata.get("Created", "")
-    updated = metadata.get("Updated", "")
-    depends = metadata.get("Depends on", "")
+    depends_on = unquote(metadata.get("Depends on", ""))
 
-    # Validar que la tabla use una sola barra (no ||)
-    content = path.read_text(encoding="utf-8")
-    if "||" in content:
-        errors.append("tabla: formato inválido: celdas vacías no permitidas (||)")
-
-    # Limpiar backticks del estado antes de validar
-    # Validar estado
     if status not in VALID_STATES:
-        errors.append(f"estado: '{status}' no válido. Debe ser uno de: {', '.join(sorted(VALID_STATES))}")
+        errors.append(f"estado no válido: {status!r}")
+    if status == "in_progress":
+        if not owner or owner == "—":
+            errors.append("owner obligatorio durante in_progress")
+    elif owner != "—":
+        errors.append("owner debe ser — fuera de in_progress")
 
-    # Validar owner (puede ser "—" o cualquier string)
-    # No hay restricción específica para owner
+    for field in ("Created", "Updated"):
+        value = metadata.get(field, "")
+        if not TIMESTAMP_RE.fullmatch(value):
+            errors.append(f"{field} no es un timestamp UTC válido")
 
-    # Validar timestamps UTC ISO 8601
-    for ts_field in ("Created", "Updated"):
-        ts_value = metadata.get(ts_field, "")
-        if ts_value and not ISO8601_PATTERN.match(ts_value):
-            errors.append(f"{ts_field}: '{ts_value}' no es un timestamp UTC ISO 8601 válido")
-
-    # Validar dependencias
-    if depends and depends != "—":
-        # La dependencia no puede ser la tarea misma
-        task_id = path.stem  # Ej: TASK-003-crear-validador-tablero -> TASK-003-crear-validador-tablero
-        # Extraer el ID de la tarea (parte antes del primer guion)
-        task_id_base = task_id.split("-")[0]
-        if depends == task_id_base:
-            errors.append(f"dependencia: no puede depender de sí misma ({depends})")
-        elif depends not in index:
-            errors.append(f"dependencia: '{depends}' no existe en el índice")
-
+    if depends_on not in ("", "—"):
+        if depends_on == task_id:
+            errors.append("dependencia propia no permitida")
+        elif depends_on not in known_ids:
+            errors.append(f"dependencia inexistente: {depends_on}")
     return errors
 
 
-def validate_index_consistency(index: dict, tasks: dict) -> list[str]:
-    """
-    Valida que el índice sea consistente con los archivos de tarea.
+def parse_index(path: Path) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """Devuelve las filas estructuradas del índice y los errores de formato."""
+    try:
+        header, rows = markdown_table.parse_first_table(path.read_text(encoding="utf-8"))
+    except (OSError, markdown_table.TableFormatError) as error:
+        return {}, [f"tabla: {error}"]
 
-    Devuelve una lista de errores.
-    """
-    errors = []
+    if header != INDEX_HEADER:
+        return {}, ["tabla: cabecera del índice inválida"]
 
-    for task_id, slug in index.items():
-        expected_path = Path(f"monitoring/building/tasks/{task_id}-{slug}.md")
-        if expected_path not in tasks:
-            errors.append(f"{task_id}: enlace en índice incorrecto (esperado: {expected_path})")
+    index: dict[str, dict[str, str]] = {}
+    errors: list[str] = []
+    for row in rows:
+        if len(row) != 5:
+            errors.append("tabla: fila del índice con número de columnas inválido")
+            continue
+        task_id, link, status, owner, depends_on = row
+        link_match = TASK_LINK_RE.fullmatch(link)
+        if not re.fullmatch(r"TASK-\d{3}", task_id):
+            errors.append(f"ID de índice inválido: {task_id!r}")
+            continue
+        if link_match is None:
+            errors.append(f"{task_id}: enlace de tarea inválido")
+            continue
+        if link_match.group(3) != task_id:
+            errors.append(f"{task_id}: enlace apunta a otro ID")
+        if task_id in index:
+            errors.append(f"{task_id}: ID duplicado en el índice")
+            continue
+        index[task_id] = {
+            "link": link,
+            "path": link_match.group(2),
+            "status": unquote(status),
+            "owner": owner,
+            "depends": unquote(depends_on),
+        }
+    return index, errors
 
-    return errors
 
-
-def main(argv=None):
-    """Entrada principal del CLI."""
-    parser = argparse.ArgumentParser(
-        prog="taskctl",
-        description="Validador del tablero de tareas"
-    )
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    validate_parser = subparsers.add_parser("validate")
-    validate_parser.add_argument(
-        "--root",
-        type=str,
-        default=".",
-        help="Raíz del repositorio (default: .)"
-    )
-
-    args = parser.parse_args(argv)
-
-    if args.command != "validate":
-        parser.error(f"Comando desconocido: {args.command}")
-
-    root = Path(args.root)
-
-    # Validar que la raíz existe
-    if not root.exists():
-        print(f"Error: ruta '{root}' no existe", file=sys.stderr)
-        return 2
-
-    if not root.is_dir():
-        print(f"Error: '{root}' no es un directorio", file=sys.stderr)
-        return 2
-
-    # Construir el índice de tareas
-    index = {}
-    tasks = {}
-
+def validate(root: Path) -> tuple[int, list[str], int]:
+    """Valida el tablero y devuelve código, errores y número de tareas."""
     tasks_dir = root / "monitoring" / "building" / "tasks"
-    if not tasks_dir.exists():
-        print(f"Error: directorio de tareas '{tasks_dir}' no existe", file=sys.stderr)
-        return 2
+    index_path = root / "monitoring" / "building" / "TASKS.md"
+    if not root.is_dir() or not tasks_dir.is_dir() or not index_path.is_file():
+        return 2, ["estructura del repositorio inexistente"], 0
 
-    # Leer el índice TASKS.md
-    tasks_md = root / "monitoring" / "building" / "TASKS.md"
-    if tasks_md.exists():
+    task_paths = sorted(path for path in tasks_dir.iterdir() if path.is_file() and path.suffix == ".md")
+    tasks: dict[str, dict[str, object]] = {}
+    errors: list[str] = []
+    for path in task_paths:
+        match = TASK_NAME_RE.fullmatch(path.name)
+        relative = path.relative_to(root).as_posix()
+        if match is None:
+            errors.append(f"{relative}: nombre de fichero de tarea inválido")
+            continue
+        task_id = match.group(1)
+        if task_id in tasks:
+            errors.append(f"{relative}: ID de tarea duplicado: {task_id}")
+            continue
         try:
-            content = tasks_md.read_text(encoding="utf-8")
-            lines = content.strip().split("\n")
+            metadata = parse_task_file(path)
+        except (OSError, markdown_table.TableFormatError, ValueError) as error:
+            errors.append(f"{relative}: tabla: {error}")
+            continue
+        tasks[task_id] = {"path": path, "metadata": metadata}
 
-            # Buscar la tabla del índice
-            in_table = False
-            for line in lines:
-                if line.startswith("| ID | Tarea |"):
-                    in_table = True
-                    continue
-                if in_table and line.startswith("|") and "|" in line:
-                    # Parsear fila del índice
-                    cells = [c.strip() for c in line.split("|")]
-                    if len(cells) >= 7:
-                        task_id = cells[1]
-                        # Extraer slug del enlace: [título](tasks/slug.md) -> slug
-                        link = cells[2].split("]")[1]  # Extraer enlace: (tasks/slug.md)
-                        slug = link[1:].split("tasks/")[1].rsplit(".md")[0]  # Extraer slug
-                        status = cells[3].strip().strip("`")  # Quitar backticks
-                        owner = cells[4]
-                        depends = cells[5]
-                        index[task_id] = slug
-                    elif len(cells) >= 2 and cells[1]:
-                        # Fila incompleta: registrar task_id sin slug
-                        task_id = cells[1]
-                        index[task_id] = None
-        except Exception as e:
-            print(f"Error al leer TASKS.md: {e}", file=sys.stderr)
-            return 1
+    index, index_errors = parse_index(index_path)
+    errors.extend(f"monitoring/building/TASKS.md: {error}" for error in index_errors)
+    known_ids = set(tasks)
 
-    # Descubrir tareas en orden
-    for f in sorted(tasks_dir.iterdir()):
-        if f.is_file() and f.suffix == ".md":
-            tasks[f] = f
+    for task_id, task in tasks.items():
+        path = task["path"]
+        metadata = task["metadata"]
+        assert isinstance(path, Path)
+        assert isinstance(metadata, dict)
+        relative = path.relative_to(root).as_posix()
+        errors.extend(f"{relative}: {error}" for error in task_errors(path, metadata, known_ids))
 
-    # Validar cada archivo de tarea
-    all_errors = []
+        row = index.get(task_id)
+        if row is None:
+            errors.append(f"{relative}: {task_id} no aparece en TASKS.md")
+            continue
+        expected_link = f"tasks/{path.name}"
+        if row["path"] != expected_link:
+            errors.append(f"{relative}: {task_id} tiene un enlace de índice incorrecto")
+        if row["status"] != unquote(metadata.get("Status", "")):
+            errors.append(f"{relative}: {task_id} tiene estado distinto en TASKS.md")
+        if row["owner"] != metadata.get("Owner", ""):
+            errors.append(f"{relative}: {task_id} tiene owner distinto en TASKS.md")
+        if row["depends"] != unquote(metadata.get("Depends on", "")):
+            errors.append(f"{relative}: {task_id} tiene dependencia distinta en TASKS.md")
 
-    for path in sorted(tasks.values()):
-        errors = validate_task_file(path, index)
-        all_errors.extend(errors)
+    for task_id in index:
+        if task_id not in tasks:
+            errors.append(f"monitoring/building/TASKS.md: {task_id} no tiene fichero de tarea")
 
-    # Validar consistencia del índice
-    index_errors = validate_index_consistency(index, tasks)
-    all_errors.extend(index_errors)
+    return (1 if errors else 0), sorted(errors), len(tasks)
 
-    # Reportar errores
-    if all_errors:
-        for error in all_errors:
+
+def main(argv: list[str] | None = None) -> int:
+    """Punto de entrada de la CLI."""
+    parser = argparse.ArgumentParser(prog="taskctl", description="Validador del tablero de tareas")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    validate_parser = subparsers.add_parser("validate")
+    validate_parser.add_argument("--root", default=".", help="Raíz del repositorio")
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as error:
+        return int(error.code)
+
+    code, errors, count = validate(Path(args.root))
+    if code == 0:
+        print(f"OK: {count} tasks")
+    else:
+        for error in errors:
             print(error, file=sys.stderr)
-        return 1
-
-    print(f"OK: {len(tasks)} tasks")
-    return 0
+    return code
 
 
 if __name__ == "__main__":

@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `blocked` |
+| Status | `done` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-29T11:19:55Z |
+| Updated | 2026-08-29T11:26:42Z |
 | Depends on | TASK-002 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -163,4 +163,5 @@ se habilita TASK-004.
 
 ## Handoff
 
-Reabierta con un procedimiento literal para tres nuevas rondas.
+Aceptada tras auditoría independiente: tests de contrato, validación del
+tablero, suite existente y comprobación de espacios en blanco correctos.
