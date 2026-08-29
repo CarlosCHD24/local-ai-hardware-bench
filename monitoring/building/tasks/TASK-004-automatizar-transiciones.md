@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `draft` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-28T22:52:58Z |
+| Updated | 2026-08-29T11:57:35Z |
 | Depends on | TASK-003 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -19,6 +19,19 @@
 
 Ampliar `taskctl` con transiciones atómicas `claim` y `submit` para uso del
 orquestador.
+
+## Decisión de recuperación
+
+El piloto demostró que esta tarea combina tres problemas de clase C: dos
+subcomandos públicos, modificación coordinada de dos documentos y rollback
+ante fallo del segundo reemplazo. No se vuelve a asignar como una sola tarea a
+Hermes.
+
+Antes de reabrirla, el diseñador debe dividir los contratos inmutables y el
+backlog en dos entregas: primero `claim` con sus reglas de estado y
+dependencias; después `submit` con escritura atómica y rollback. Cada entrega
+debe tener fixtures, códigos y auditoría propios. Consultar
+[`AGENT_EXECUTION_PLAYBOOK.md`](../AGENT_EXECUTION_PLAYBOOK.md).
 
 ## Contrato cerrado
 
@@ -71,4 +84,6 @@ contra el repositorio real.
 
 ## Handoff
 
-Sin trabajo pendiente ni bloqueos.
+En `draft` hasta separar contratos y tareas. Los intentos anteriores fallaron
+por mezclar parsing de CLI, transiciones, reemplazos atómicos y rollback en una
+única entrega.

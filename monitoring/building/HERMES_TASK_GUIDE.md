@@ -197,6 +197,23 @@ SHA, pero el worktree puede contener únicamente el candidato permitido. Si la
 rama remota avanzó, el job se detiene; no integra cambios nuevos a mitad de una
 tarea. La siguiente tarea se crea desde `accepted_commit` en una rama nueva.
 
+### Puerta de reparación
+
+Antes de modificar el candidato, Hermes ejecuta el test de contrato afectado y
+trabaja sobre su salida real. Después de cada edición ejecuta `py_compile` para
+Python y repite ese mismo contrato. No puede declarar una corrección sin un
+código `0` observado en la ronda actual.
+
+Una segunda ronda debe abordar una causa raíz distinta de la primera. Si la
+firma de auditoría se repite dos veces, el orquestador bloquea y escala al
+diseñador en vez de consumir una tercera ronda idéntica. El handoff conserva
+el test fallido, la hipótesis descartada y el esqueleto o división necesarios.
+
+Para una operación sobre dos archivos, un fallo simulado de escritura o un
+rollback, la tarea debe aportar un protocolo literal y contratos separados por
+transición. Sin ellos permanece `draft`; no se usa Hermes para descubrir el
+diseño durante la ejecución.
+
 ## Qué trabajo asignar
 
 Adecuado sin ayuda adicional:

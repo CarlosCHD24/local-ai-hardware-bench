@@ -19,7 +19,9 @@ copiarán logs extensos ni explicaciones generales que ya estén en
 4. [`TASKS.md`](TASKS.md) es el índice resumido de todas las tareas.
 5. [`HERMES_TASK_GUIDE.md`](HERMES_TASK_GUIDE.md) define el contrato de
    ejecución del agente local.
-6. El manifiesto de cada job fija los commits y la rama exactos de esa
+6. [`AGENT_EXECUTION_PLAYBOOK.md`](AGENT_EXECUTION_PLAYBOOK.md) clasifica el
+   trabajo apto para el agente local y define recuperación y escalado.
+7. El manifiesto de cada job fija los commits y la rama exactos de esa
    ejecución; se genera desde [`JOB_MANIFEST_TEMPLATE.md`](JOB_MANIFEST_TEMPLATE.md).
 
 Si el índice y una tarea discrepan, manda el fichero individual. El
@@ -149,6 +151,11 @@ uno de pruebas, entre cuatro y seis comportamientos verificables y una sola
 interfaz principal. Si no cabe previsiblemente en una ronda de 12 iteraciones,
 se divide antes de marcar `ready`. Las rondas adicionales corrigen defectos; no
 justifican una tarea inicial mayor.
+
+Antes de marcar una tarea `ready`, el diseñador aplica también la puerta de
+diseño de [`AGENT_EXECUTION_PLAYBOOK.md`](AGENT_EXECUTION_PLAYBOOK.md). Las
+tareas de escritura atómica, varios documentos o rollback no se entregan a
+Hermes sin un esqueleto y contratos independientes por comportamiento.
 
 ## Estados
 
@@ -285,7 +292,9 @@ y dato relevante. Los logs completos deben permanecer fuera del documento.
 2. Este documento, para entender el proceso.
 3. [`TASKS.md`](TASKS.md), para ver el tablero actual.
 4. La tarea elegida y los ficheros de sus dependencias.
-5. Sólo después, los archivos de implementación relevantes.
+5. [`AGENT_EXECUTION_PLAYBOOK.md`](AGENT_EXECUTION_PLAYBOOK.md), si el agente
+   local ejecutará o reparará la tarea.
+6. Sólo después, los archivos de implementación relevantes.
 
 Para Hermes, el orden empieza fuera del worktree: leer el manifiesto, ejecutar
 su preflight Git y sólo entonces seguir esta lista. Leer además

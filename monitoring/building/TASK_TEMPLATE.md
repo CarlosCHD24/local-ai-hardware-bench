@@ -44,6 +44,17 @@ No incluye:
 - Efectos externos permitidos y prohibidos.
 - Ejemplo literal válido y ejemplo literal inválido para cada formato.
 
+## Implementación guiada
+
+Incluir sólo cuando la tarea sea de clase B o C según
+`AGENT_EXECUTION_PLAYBOOK.md`:
+
+- Firma, subcomandos o estructura de datos exactos.
+- Invariantes que no puede inferir el agente.
+- Para varios archivos: orden de escritura, simulación de fallo y rollback.
+- Referencia explícita al test de contrato que debe ejecutar antes y después de
+  cada edición.
+
 ## Preflight
 
 El preflight Git exacto se genera en el manifiesto. Debe pasar antes de estos
@@ -106,3 +117,6 @@ Para archivos nuevos, ejecutar primero `git add -N -- rutas-permitidas` y despu�
 ## Handoff
 
 Sin trabajo pendiente ni bloqueos.
+
+Si la tarea se bloquea, registrar la firma del test, la hipótesis descartada y
+la división o esqueleto que necesita el diseñador; no dejar un mensaje genérico.

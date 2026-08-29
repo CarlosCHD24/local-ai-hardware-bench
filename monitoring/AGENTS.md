@@ -33,6 +33,12 @@ Estas reglas se aplican a todo el árbol `monitoring/`.
     prepara o sustituye la rama y el worktree.
 15. La credencial disponible para Hermes es de sólo lectura. La publicación de
     commits y ramas pertenece al orquestador.
+16. Ejecuta el test de contrato antes de reparar y repítelo después de cada
+    edición. Para Python, ejecuta además `py_compile` antes de contratos más
+    amplios. No declares una corrección sin salida de código `0` observada.
+17. Si dos rondas producen la misma causa de auditoría, no intentes una tercera
+    variación ciega: devuelve `FAIL` con la causa, el test exacto y la división
+    o el esqueleto que falta.
 
 Si una instrucción esencial es ambigua o exige ampliar el alcance, devuelve
 `FAIL` con el bloqueo. En ejecución no orquestada, marca además la tarea como
