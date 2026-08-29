@@ -125,6 +125,10 @@ Tras una auditoría correcta, el orquestador crea y publica `accepted_commit`.
 La siguiente tarea recibe una rama nueva basada en ese commit. Publicar una
 rama de trabajo no equivale a fusionarla en la rama principal.
 
+La implementación de referencia está en `../scripts/`: un preparador por tarea,
+un worker auditado y un coordinador secuencial. Sus pruebas usan repositorios
+temporales y no necesitan GitHub ni el servidor de inferencia.
+
 ## Tamaño de una tarea
 
 Cada tarea debe cumplir estas reglas:

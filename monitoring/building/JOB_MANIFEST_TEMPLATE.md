@@ -17,6 +17,8 @@ base_commit: SHA-COMPLETO
 work_branch: hermes/TASK-NNN/JOB-ID
 execution_commit: SHA-COMPLETO
 accepted_commit: null
+result: prepared
+result_commit: null
 worktree: RUTA-ABSOLUTA
 profile: monitoringworker
 allowed_paths:
@@ -27,8 +29,8 @@ contract_checks:
 
 `base_commit` contiene documentación y contratos publicados.
 `execution_commit` añade únicamente la reclamación de la tarea y es el `HEAD`
-limpio que recibe Hermes. `accepted_commit` lo completa el orquestador después
-de que la auditoría pase.
+limpio que recibe Hermes. El orquestador completa `result`, `result_commit` y,
+si la auditoría pasa, `accepted_commit`.
 
 ## Preflight Git generado
 
@@ -64,3 +66,6 @@ Tras una auditoría correcta, el orquestador actualiza estado y evidencias,
 crea y publica `accepted_commit` en `work_branch`. La siguiente tarea recibe un
 manifiesto nuevo y una rama nueva basada en ese commit. La fusión a la rama
 principal es una decisión posterior del orquestador o mantenedor.
+
+Si se agotan las rondas, publica el commit `blocked` como `result_commit`, deja
+`accepted_commit: null` y detiene la secuencia.

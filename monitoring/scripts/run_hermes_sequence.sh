@@ -6,9 +6,17 @@ worktree="${HERMES_WORKTREE:?HERMES_WORKTREE is required}"
 job_dir="${HERMES_JOB_DIR:?HERMES_JOB_DIR is required}"
 hermes_bin="${HERMES_BIN:-$HOME/.hermes/hermes-agent/venv/bin/hermes}"
 profile_dir="${HERMES_PROFILE_DIR:-$HOME/.hermes/profiles/monitoringworker}"
+job_manifest="${HERMES_JOB_MANIFEST:-}"
 round_limit=3
 round_timeout=720
 board="$worktree/monitoring/building/TASKS.md"
+manifest_task_id=''
+manifest_remote=''
+manifest_base_branch=''
+manifest_base_commit=''
+manifest_work_branch=''
+manifest_execution_commit=''
+manifest_worktree=''
 
 write_state() {
     printf '%s\n' "$1" >"$job_dir/state"
@@ -18,6 +26,12 @@ fail() {
     printf '[%s] ERROR: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1"
     write_state "FAILED $1"
     exit 1
+}
+
+sed_in_place() {
+    local expression="$1" file="$2" temporary
+    temporary="$file.tmp.$$"
+    sed "$expression" "$file" >"$temporary" && mv "$temporary" "$file"
 }
 
 task_path() {
@@ -30,14 +44,83 @@ task_path() {
     esac
 }
 
+manifest_value() {
+    local key="$1"
+    sed -n "s/^${key}: *//p" "$job_manifest" | tail -n 1
+}
+
+valid_commit() {
+    printf '%s\n' "$1" | grep -Eq '^[0-9a-f]{40}$'
+}
+
+load_manifest() {
+    test -n "$job_manifest" || {
+        printf 'job manifest is required\n' >&2
+        return 1
+    }
+    test -f "$job_manifest" || {
+        printf 'job manifest is unavailable: %s\n' "$job_manifest" >&2
+        return 1
+    }
+
+    manifest_task_id="$(manifest_value task_id)"
+    manifest_remote="$(manifest_value remote)"
+    manifest_base_branch="$(manifest_value base_branch)"
+    manifest_base_commit="$(manifest_value base_commit)"
+    manifest_work_branch="$(manifest_value work_branch)"
+    manifest_execution_commit="$(manifest_value execution_commit)"
+    manifest_worktree="$(manifest_value worktree)"
+
+    printf '%s\n' "$manifest_task_id" | grep -Eq '^TASK-[0-9]{3}$' || return 1
+    printf '%s\n' "$manifest_remote" | grep -Eq '^[A-Za-z0-9._-]+$' || return 1
+    printf '%s\n' "$manifest_base_branch" | grep -Eq '^[A-Za-z0-9._/-]+$' || return 1
+    printf '%s\n' "$manifest_work_branch" | grep -Eq '^hermes/TASK-[0-9]{3}/[A-Za-z0-9._-]+$' || return 1
+    valid_commit "$manifest_base_commit" || return 1
+    valid_commit "$manifest_execution_commit" || return 1
+    test "$(cd "$worktree" 2>/dev/null && pwd -P)" = "$manifest_worktree" || return 1
+}
+
+verify_git_manifest() {
+    local task_id="$1" mode="$2" actual_branch actual_head remote_head
+    git -C "$worktree" fetch --prune "$manifest_remote" || return 1
+    actual_branch="$(git -C "$worktree" branch --show-current)" || return 1
+    actual_head="$(git -C "$worktree" rev-parse HEAD)" || return 1
+    remote_head="$(git -C "$worktree" rev-parse "$manifest_remote/$manifest_work_branch^{commit}")" || return 1
+
+    test "$task_id" = "$manifest_task_id" || return 1
+    test "$actual_branch" = "$manifest_work_branch" || return 1
+    test "$actual_head" = "$manifest_execution_commit" || return 1
+    test "$remote_head" = "$manifest_execution_commit" || return 1
+    git -C "$worktree" merge-base --is-ancestor \
+        "$manifest_base_commit" "$manifest_execution_commit" || return 1
+
+    if test "$mode" = 'clean'; then
+        test -z "$(git -C "$worktree" status --porcelain)" || return 1
+    else
+        check_allowed_paths "$task_id"
+    fi
+}
+
+replace_manifest_value() {
+    local key="$1" value="$2" temporary
+    temporary="$job_manifest.tmp"
+    awk -v key="$key" -v value="$value" '
+        index($0, key ":") == 1 { print key ": " value; found=1; next }
+        { print }
+        END { if (!found) print key ": " value }
+    ' "$job_manifest" >"$temporary" && mv "$temporary" "$job_manifest"
+}
+
 preflight() {
     local secret response_file
     write_state 'PREFLIGHT'
     test -e "$worktree/.git" || fail 'worktree is unavailable'
+    load_manifest || fail 'job manifest is invalid'
+    verify_git_manifest "$manifest_task_id" clean || \
+        fail 'Git state does not match the job manifest'
     test -x "$hermes_bin" || fail 'Hermes executable is unavailable'
     command -v timeout >/dev/null || fail 'external timeout is unavailable'
     command -v curl >/dev/null || fail 'curl is unavailable'
-    test -z "$(git -C "$worktree" status --short)" || fail 'worktree is not clean'
 
     "$hermes_bin" -p monitoringworker --version >/dev/null 2>&1 || \
         fail 'monitoringworker cannot start in detached environment'
@@ -84,20 +167,28 @@ claim_task() {
             fail "$task_id dependency $dependency is not done"
     fi
 
-    sed -i 's/^| Status | `ready` |$/| Status | `in_progress` |/' "$file"
-    sed -i 's/^| Owner | — |$/| Owner | Hermes |/' "$file"
-    sed -i "s/^| Updated | [^|]* |$/| Updated | $now |/" "$file"
-    sed -i "/^| ${task_id} |/s/| \`ready\` | — |/| \`in_progress\` | Hermes |/" "$board"
+    sed_in_place 's/^| Status | `ready` |$/| Status | `in_progress` |/' "$file"
+    sed_in_place 's/^| Owner | — |$/| Owner | Hermes |/' "$file"
+    sed_in_place "s/^| Updated | [^|]* |$/| Updated | $now |/" "$file"
+    sed_in_place "/^| ${task_id} |/s/| \`ready\` | — |/| \`in_progress\` | Hermes |/" "$board"
+}
+
+check_claimed_task() {
+    local task_id="$1" file
+    file="$(task_path "$task_id")" || return 1
+    grep -Fq '| Status | `in_progress` |' "$file" || return 1
+    grep -Fq '| Owner | Hermes |' "$file" || return 1
+    grep -F "| $task_id |" "$board" | grep -Fq '| `in_progress` | Hermes |'
 }
 
 complete_task() {
     local task_id="$1" file now
     file="$(task_path "$task_id")"
     now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    sed -i 's/^| Status | `in_progress` |$/| Status | `done` |/' "$file"
-    sed -i 's/^| Owner | Hermes |$/| Owner | — |/' "$file"
-    sed -i "s/^| Updated | [^|]* |$/| Updated | $now |/" "$file"
-    sed -i "/^| ${task_id} |/s/| \`in_progress\` | Hermes |/| \`done\` | — |/" "$board"
+    sed_in_place 's/^| Status | `in_progress` |$/| Status | `done` |/' "$file"
+    sed_in_place 's/^| Owner | Hermes |$/| Owner | — |/' "$file"
+    sed_in_place "s/^| Updated | [^|]* |$/| Updated | $now |/" "$file"
+    sed_in_place "/^| ${task_id} |/s/| \`in_progress\` | Hermes |/| \`done\` | — |/" "$board"
 }
 
 block_task() {
@@ -105,11 +196,11 @@ block_task() {
     file="$(task_path "$task_id")"
     now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     message="Bloqueada automáticamente tras tres rondas; consultar los logs del job."
-    sed -i 's/^| Status | `in_progress` |$/| Status | `blocked` |/' "$file"
-    sed -i 's/^| Owner | Hermes |$/| Owner | — |/' "$file"
-    sed -i "s/^| Updated | [^|]* |$/| Updated | $now |/" "$file"
-    sed -i "s/^Sin trabajo pendiente ni bloqueos\.$/$message/" "$file"
-    sed -i "/^| ${task_id} |/s/| \`in_progress\` | Hermes |/| \`blocked\` | — |/" "$board"
+    sed_in_place 's/^| Status | `in_progress` |$/| Status | `blocked` |/' "$file"
+    sed_in_place 's/^| Owner | Hermes |$/| Owner | — |/' "$file"
+    sed_in_place "s/^| Updated | [^|]* |$/| Updated | $now |/" "$file"
+    sed_in_place "s/^Sin trabajo pendiente ni bloqueos\.$/$message/" "$file"
+    sed_in_place "/^| ${task_id} |/s/| \`in_progress\` | Hermes |/| \`blocked\` | — |/" "$board"
 }
 
 allowed_path() {
@@ -200,7 +291,8 @@ normalize_allowed_python() {
         TASK-005) path='monitoring/nvidia_metrics.py' ;;
     esac
     for path in $path; do
-        test ! -f "$worktree/$path" || sed -i 's/[[:space:]]\+$//' "$worktree/$path"
+        test ! -f "$worktree/$path" || \
+            sed_in_place 's/[[:space:]]\+$//' "$worktree/$path"
     done
 }
 
@@ -295,8 +387,22 @@ make_prompt() {
     file="$(task_path "$task_id")"
     {
         printf 'Completa %s de forma autónoma. Esta es la ronda %s de 3.\n\n' "$task_id" "$round"
-        printf 'Trabaja sólo en el directorio recibido mediante --in. La primera herramienta es `pwd`. '
-        printf 'No busques otros repositorios. El proveedor autorizado es exclusivamente local-agent.\n\n'
+        printf 'Trabaja sólo en el directorio recibido mediante --in. No busques otros repositorios. '
+        printf 'El proveedor autorizado es exclusivamente local-agent.\n\n'
+        printf 'Lee el manifiesto %s. La primera herramienta es `pwd`. Después ejecuta exactamente:\n' "$job_manifest"
+        printf -- '- `git fetch --prune %s`\n' "$manifest_remote"
+        printf -- '- `test "$(git branch --show-current)" = "%s"`\n' "$manifest_work_branch"
+        printf -- '- `test "$(git rev-parse HEAD)" = "%s"`\n' "$manifest_execution_commit"
+        printf -- '- `test "$(git rev-parse %s/%s)" = "%s"`\n' \
+            "$manifest_remote" "$manifest_work_branch" "$manifest_execution_commit"
+        printf -- '- `git merge-base --is-ancestor %s %s`\n' \
+            "$manifest_base_commit" "$manifest_execution_commit"
+        if test "$round" -eq 1; then
+            printf -- '- `test -z "$(git status --porcelain)"`\n'
+        else
+            printf 'El candidato puede modificar sólo las rutas técnicas permitidas; no debe haber otros cambios.\n'
+        fi
+        printf 'Si una comprobación falla, devuelve CONFIG_ERROR sin usar pull, reset, cambios de rama ni fusiones.\n\n'
         if test "$round" -eq 1; then
             printf 'Lee monitoring/AGENTS.md, monitoring/building/README.md, '
             printf 'monitoring/building/HERMES_TASK_GUIDE.md y %s.\n' "${file#"$worktree/"}"
@@ -324,15 +430,40 @@ commit_task() {
     ) || fail "$task_id commit failed"
 }
 
+publish_task_result() {
+    local result="$1" current remote_head
+    test -z "$(git -C "$worktree" status --porcelain)" || \
+        fail 'worktree is not clean before publication'
+    current="$(git -C "$worktree" rev-parse HEAD)" || fail 'cannot resolve result commit'
+    git -C "$worktree" push "$manifest_remote" "$manifest_work_branch" || \
+        fail 'result branch could not be published'
+    git -C "$worktree" fetch --prune "$manifest_remote" || \
+        fail 'published branch could not be verified'
+    remote_head="$(git -C "$worktree" rev-parse "$manifest_remote/$manifest_work_branch^{commit}")" || \
+        fail 'published branch is unavailable'
+    test "$remote_head" = "$current" || fail 'published branch does not match result commit'
+
+    replace_manifest_value result "$result" || fail 'manifest result could not be updated'
+    replace_manifest_value result_commit "$current" || fail 'manifest result commit could not be updated'
+    if test "$result" = 'accepted'; then
+        replace_manifest_value accepted_commit "$current" || \
+            fail 'manifest accepted commit could not be updated'
+    fi
+}
+
 run_task() {
     local task_id="$1" round prompt output audit_log run_code previous_audit max_turns run_budget timeout_seconds preflight_log
     preflight_log="$job_dir/$task_id-preflight.log"
     task_preflight "$task_id" >"$preflight_log" 2>&1 || \
         fail "$task_id task preflight failed; baseline is invalid"
-    claim_task "$task_id"
+    check_claimed_task "$task_id" || fail "$task_id is not claimed in execution_commit"
     previous_audit=''
 
     for round in 1 2 3; do
+        if test "$round" -gt 1; then
+            verify_git_manifest "$task_id" candidate || \
+                fail "$task_id Git state changed before correction round"
+        fi
         write_state "RUNNING $task_id ROUND $round/$round_limit"
         prompt="$job_dir/$task_id-round-$round.prompt"
         output="$job_dir/$task_id-round-$round-hermes.log"
@@ -372,6 +503,7 @@ run_task() {
                     >>"$audit_log" 2>&1 || fail "$task_id final state validation failed"
             fi
             commit_task "$task_id" "Complete $task_id with Hermes"
+            publish_task_result accepted
             printf '[%s] Completed %s in round %s\n' \
                 "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$task_id" "$round"
             return 0
@@ -386,6 +518,7 @@ run_task() {
 
     block_task "$task_id"
     commit_task "$task_id" "Block $task_id after three Hermes rounds"
+    publish_task_result blocked
     write_state "BLOCKED $task_id AFTER $round_limit ROUNDS"
     printf '[%s] Blocked %s after %s rounds\n' \
         "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$task_id" "$round_limit"
@@ -395,19 +528,16 @@ run_task() {
 main() {
     mkdir -p "$job_dir"
     exec >>"$job_dir/runner.log" 2>&1
-    printf '[%s] Sequential Hermes job started\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf '[%s] Hermes task job started\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     preflight
     if test "${HERMES_PREFLIGHT_ONLY:-0}" = '1'; then
         write_state 'PREFLIGHT_OK provider=custom:local-ai model=local-agent fallback=disabled'
         printf '[%s] Preflight-only run completed\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         return 0
     fi
-    run_task TASK-002
-    run_task TASK-003
-    run_task TASK-004
-    run_task TASK-005
-    write_state 'COMPLETE TASK-002 TASK-003 TASK-004 TASK-005'
-    printf '[%s] Sequential Hermes job completed\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    run_task "$manifest_task_id"
+    write_state "COMPLETE $manifest_task_id"
+    printf '[%s] Hermes task job completed\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 
 if test "${BASH_SOURCE[0]}" = "$0"; then

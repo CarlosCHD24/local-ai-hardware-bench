@@ -132,6 +132,21 @@ resuelve conflictos ni busca otros repositorios o worktrees.
 La credencial de Hermes es de sólo lectura. Los commits, pushes y fusiones se
 ejecutan fuera del modelo por el orquestador.
 
+## Scripts operativos
+
+- `monitoring/scripts/prepare_hermes_task.sh` hace `fetch`, exige que la rama
+  remota coincida con `base_commit`, crea rama y worktree, reclama la tarea,
+  publica `execution_commit` y genera el manifiesto.
+- `monitoring/scripts/run_hermes_sequence.sh` actúa como worker de una única
+  tarea ya preparada: vuelve a verificar el manifiesto, ejecuta hasta tres
+  rondas, audita, crea el commit final y lo publica.
+- `monitoring/scripts/orchestrate_hermes_sequence.sh` encadena TASK-002 a
+  TASK-005. Cada tarea nueva parte del `accepted_commit` de la anterior.
+
+El preparador y el worker se ejecutan como procesos del orquestador, no como
+herramientas decididas por el modelo. Hermes recibe únicamente el worktree, el
+manifiesto y el prompt de su tarea.
+
 ## Salida final obligatoria
 
 Hermes devuelve únicamente evidencia breve:
