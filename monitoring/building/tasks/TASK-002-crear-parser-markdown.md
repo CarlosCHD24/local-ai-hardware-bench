@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `done` |
+| Status | `ready` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-28T23:17:33Z |
+| Updated | 2026-08-28T22:52:58Z |
 | Depends on | TASK-001 |
 | Execution | `orchestrated` |
 | Profile | `monitoringworker` |
@@ -39,13 +39,15 @@ La función busca la primera tabla, devuelve cabeceras y filas sin la línea
 separadora, elimina sólo espacios exteriores y conserva backticks y texto.
 Exige al menos una fila de datos, el mismo número de columnas y separadores
 `---` con dos puntos opcionales. Una línea vacía o no tabular termina la tabla.
+Cada celda separadora se valida de forma independiente con el patrón equivalente
+a `^:?-{3,}:?$`; `:---:`, `---` y `-----` son válidos en la misma fila.
 
 Formato válido literal:
 
 ```markdown
 | Campo | Valor |
 |---|---|
-| Status | `done` |
+| Status | `ready` |
 ```
 
 Formato inválido literal, que debe lanzar `TableFormatError`:
@@ -70,9 +72,9 @@ archivos y no añadir CLI.
 ## Archivos permitidos
 
 - `monitoring/markdown_table.py`
-- `monitoring/tests/test_markdown_table.py`
 
-No modificar `monitoring/contract_tests/` ni `monitoring/building/`.
+No crear tests adicionales: el contrato inmutable cubre toda la matriz. No
+modificar `monitoring/contract_tests/` ni `monitoring/building/`.
 
 ## Verificación obligatoria
 

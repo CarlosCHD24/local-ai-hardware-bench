@@ -70,7 +70,8 @@ Cuando haya mocks, tiempo, red o escritura, incluir un fixture o patrón mínimo
 que el ejecutor deba reutilizar.
 
 Los tests de contrato ya existen, están fuera de `Archivos` y Hermes no puede
-modificarlos. El orquestador los ejecuta al terminar cada ronda.
+modificarlos. El orquestador los ejecuta al terminar cada ronda. No solicitar un
+archivo de tests duplicado cuando el contrato cubra toda la matriz.
 
 ## Verificación
 

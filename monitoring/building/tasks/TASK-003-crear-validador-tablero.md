@@ -61,9 +61,9 @@ los documentos reales. Cualquier fila que empiece con `||` es inválida.
 ## Archivos permitidos
 
 - `monitoring/taskctl.py`
-- `monitoring/tests/test_taskctl.py`
 
-No modificar los tests de contrato ni documentos de `building/`.
+No crear tests adicionales ni modificar los tests de contrato o documentos de
+`building/`.
 
 ## Verificación obligatoria
 
