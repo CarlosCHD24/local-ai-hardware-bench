@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `blocked` |
+| Status | `ready` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-29T10:22:32Z |
+| Updated | 2026-08-29T11:08:03Z |
 | Depends on | TASK-002 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -82,6 +82,55 @@ No basta con corregir `argparse`. Reparar también estos fallos ya presentes:
 Ejecutar primero el test completo del contrato. No informar `PASS` mientras
 alguna invocación `main(["validate", "--root", ...])` produzca `SystemExit`.
 
+## Procedimiento literal de implementación
+
+No seguir reparando el parser manual de líneas. Reescribir únicamente la parte
+de lectura y comparación de `taskctl.py` con estas dos estructuras:
+
+```python
+tasks[task_id] = {"path": path, "metadata": metadata}
+index[task_id] = {
+    "link": link_cell,
+    "status": unquote(row[2]),
+    "owner": row[3],
+    "depends": row[4],
+}
+```
+
+Para el índice, usar exactamente:
+
+```python
+header, rows = markdown_table.parse_first_table(tasks_md.read_text(encoding="utf-8"))
+assert header == ["ID", "Tarea", "Estado", "Owner", "Depende de"]
+```
+
+Cada `row` tiene cinco celdas; no incluye pipes exteriores ni la fila
+`|---|...|`. El segundo valor debe coincidir con un enlace de la forma
+`[título](tasks/TASK-001-base.md)`. Conservar ese enlace literal para la
+comparación; no derivar su ruta desde el título.
+
+Usar este helper para los campos con código Markdown:
+
+```python
+def unquote(value):
+    return value[1:-1] if len(value) >= 2 and value.startswith("`") and value.endswith("`") else value
+```
+
+El fixture de contrato sólo exige los campos que realmente contiene. No exigir
+`Execution manifest` ni otro campo ausente en ese fixture. Para el fixture
+válido, `main(["validate", "--root", root])` debe devolver exactamente `0` y
+no escribir nada en stderr.
+
+Al finalizar, comprobar en este orden y detenerse para corregir si alguno no
+da `0`:
+
+```text
+python3 -m unittest monitoring.contract_tests.test_taskctl_contract
+python3 -m monitoring.taskctl validate --root .
+python3 -m unittest discover -s monitoring/tests -p 'test_*.py'
+git diff --check
+```
+
 ## Preflight
 
 | Directorio | Comando exacto | Código esperado |
@@ -114,4 +163,4 @@ se habilita TASK-004.
 
 ## Handoff
 
-Reabierta con una pista focalizada para tres nuevas rondas.
+Reabierta con un procedimiento literal para tres nuevas rondas.
