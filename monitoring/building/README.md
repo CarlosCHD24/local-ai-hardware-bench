@@ -79,6 +79,8 @@ El orquestador prepara la ejecución y no delega control de proceso al modelo.
 En tareas con `Execution: orchestrated` debe:
 
 - validar dependencias y preflight;
+- ejecutar el preflight literal de la tarea sobre el baseline limpio antes de
+  reclamarla;
 - crear el worktree y fijar la raíz autorizada;
 - reclamar y actualizar la tarea antes de invocar Hermes;
 - limitar perfil, herramientas, turnos, salida y tiempo;
@@ -86,7 +88,10 @@ En tareas con `Execution: orchestrated` debe:
 - auditar todas las salidas, incluso sin `PASS`;
 - acumular el resultado de todas las verificaciones, sin aceptar por el código
   del último comando;
-- permitir hasta tres rondas y usar los fallos como devolución concreta;
+- repetir un resumen de fallos al final del log y usarlo como devolución
+  concreta durante un máximo de tres rondas;
+- conservar en el job y retirar del worktree cualquier artefacto fuera de
+  alcance antes del siguiente intento;
 - trasladar a `review` sólo una entrega con todos los comandos en verde;
 - encargar la aceptación a un auditor independiente.
 
@@ -217,9 +222,11 @@ El auditor repite los comandos literales desde el directorio declarado y
 comprueba el diff, no sólo el resumen del ejecutor. Las afirmaciones del agente
 son un handoff, no evidencia de aceptación.
 
-Si la auditoría falla y quedan rondas, el orquestador conserva el candidato y
-devuelve los fallos exactos a una nueva sesión. Después de la tercera ronda,
-marca `blocked`, limpia `Owner` y conserva el candidato para comparación.
+Si la auditoría falla y quedan rondas, el orquestador conserva el candidato
+permitido, pone en cuarentena los cambios fuera de alcance y devuelve los
+fallos exactos a una nueva sesión. Después de la tercera ronda, repite esa
+limpieza, marca `blocked`, limpia `Owner` y conserva candidato y artefactos para
+comparación.
 
 El resultado de una verificación se resume con evidencia corta: comando, estado
 y dato relevante. Los logs completos deben permanecer fuera del documento.

@@ -131,18 +131,53 @@ allowed_path() {
     esac
 }
 
-check_allowed_paths() {
-    local task_id="$1" path actual
-    actual="$(
+changed_paths() {
+    (
         cd "$worktree" || exit 1
         { git diff --name-only; git diff --cached --name-only; git ls-files --others --exclude-standard; } | sort -u
-    )" || return 1
-    for path in $actual; do
-        allowed_path "$task_id" "$path" || {
-            printf 'forbidden path: %s\n' "$path" >&2
-            return 1
-        }
-    done
+    )
+}
+
+forbidden_paths() {
+    local task_id="$1" path
+    while IFS= read -r path; do
+        test -n "$path" || continue
+        allowed_path "$task_id" "$path" || printf '%s\n' "$path"
+    done < <(changed_paths)
+}
+
+check_allowed_paths() {
+    local task_id="$1" path failed=0
+    while IFS= read -r path; do
+        test -n "$path" || continue
+        printf 'forbidden path: %s\n' "$path" >&2
+        failed=1
+    done < <(forbidden_paths "$task_id")
+    return "$failed"
+}
+
+quarantine_forbidden_changes() {
+    local task_id="$1" round="$2" path destination quarantine_dir
+    quarantine_dir="$job_dir/$task_id-round-$round-forbidden"
+
+    while IFS= read -r path; do
+        test -n "$path" || continue
+        destination="$quarantine_dir/$path"
+        mkdir -p "$(dirname "$destination")"
+
+        if git -C "$worktree" cat-file -e "HEAD:$path" 2>/dev/null; then
+            if test -e "$worktree/$path"; then
+                cp -a "$worktree/$path" "$destination"
+            else
+                printf 'deleted tracked path\n' >"$destination.deleted"
+            fi
+            git -C "$worktree" restore --source=HEAD --staged --worktree -- "$path" || return 1
+        else
+            git -C "$worktree" reset -q HEAD -- "$path" >/dev/null 2>&1 || true
+            test ! -e "$worktree/$path" || mv "$worktree/$path" "$destination"
+        fi
+        printf 'quarantined forbidden path: %s\n' "$path"
+    done < <(forbidden_paths "$task_id")
 }
 
 intent_to_add() {
@@ -169,13 +204,41 @@ normalize_allowed_python() {
     done
 }
 
+task_preflight() {
+    local task_id="$1"
+    (
+        cd "$worktree" || exit 1
+        case "$task_id" in
+            TASK-002)
+                python3 -m py_compile monitoring/contract_tests/test_markdown_table_contract.py &&
+                    python3 -m unittest discover -s monitoring/tests -p 'test_*.py'
+                ;;
+            TASK-003)
+                python3 -m unittest monitoring.contract_tests.test_markdown_table_contract &&
+                    python3 -m py_compile monitoring/contract_tests/test_taskctl_contract.py &&
+                    python3 -m unittest discover -s monitoring/tests -p 'test_*.py'
+                ;;
+            TASK-004)
+                python3 -m monitoring.taskctl validate --root . &&
+                    python3 -m py_compile monitoring/contract_tests/test_taskctl_transitions_contract.py
+                ;;
+            TASK-005)
+                python3 -c 'import csv, subprocess, unittest' &&
+                    python3 -m py_compile monitoring/contract_tests/test_nvidia_metrics_contract.py &&
+                    python3 -m unittest discover -s monitoring/tests -p 'test_*.py'
+                ;;
+            *) return 1 ;;
+        esac
+    )
+}
+
 run_check() {
     "$@" || AUDIT_FAILED=1
     return 0
 }
 
 audit_task() {
-    local task_id="$1" audit_log="$2"
+    local task_id="$1" audit_log="$2" summary
     local failed=0
     : >"$audit_log"
     normalize_allowed_python "$task_id" >>"$audit_log" 2>&1 || failed=1
@@ -207,6 +270,23 @@ audit_task() {
         run_check git diff --check
         exit "$AUDIT_FAILED"
     ) >>"$audit_log" 2>&1 || failed=1
+
+    summary="$(grep -E '^(FAIL|ERROR):|^FAILED \(|^forbidden path:' "$audit_log" | sort -u | head -n 50)"
+    {
+        printf '\n=== AUDIT SUMMARY ===\n'
+        test -z "$summary" || printf '%s\n' "$summary"
+        if check_allowed_paths "$task_id"; then
+            printf 'scope: OK\n'
+        else
+            failed=1
+            printf 'scope: FAILED\n'
+        fi
+        if test "$failed" -eq 0; then
+            printf 'audit-result: PASSED\n'
+        else
+            printf 'audit-result: FAILED\n'
+        fi
+    } >>"$audit_log" 2>&1
     return "$failed"
 }
 
@@ -227,7 +307,7 @@ make_prompt() {
             printf 'Inspecciona sólo los archivos técnicos y corrige los fallos siguientes.\n\n'
             printf 'La auditoría independiente de la ronda anterior falló. Corrige todos estos fallos literales:\n\n'
             tail -n 100 "$audit_log"
-            printf '\n'
+            printf '\nLos artefactos fuera de alcance indicados ya fueron puestos en cuarentena. No los recrees.\n\n'
         fi
         printf 'Ejecuta las verificaciones de la tarea y termina con el formato breve de HERMES_TASK_GUIDE.md.\n'
     } >"$prompt"
@@ -245,7 +325,10 @@ commit_task() {
 }
 
 run_task() {
-    local task_id="$1" round prompt output audit_log run_code previous_audit max_turns run_budget timeout_seconds
+    local task_id="$1" round prompt output audit_log run_code previous_audit max_turns run_budget timeout_seconds preflight_log
+    preflight_log="$job_dir/$task_id-preflight.log"
+    task_preflight "$task_id" >"$preflight_log" 2>&1 || \
+        fail "$task_id task preflight failed; baseline is invalid"
     claim_task "$task_id"
     previous_audit=''
 
@@ -297,6 +380,8 @@ run_task() {
         printf '[%s] Audit failed for %s round %s\n' \
             "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$task_id" "$round"
         previous_audit="$audit_log"
+        quarantine_forbidden_changes "$task_id" "$round" >>"$audit_log" 2>&1 || \
+            fail "$task_id forbidden changes could not be quarantined"
     done
 
     block_task "$task_id"
