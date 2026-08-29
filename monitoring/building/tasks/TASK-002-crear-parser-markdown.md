@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `blocked` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-28T22:52:58Z |
+| Updated | 2026-08-29T08:18:09Z |
 | Depends on | TASK-001 |
 | Execution | `orchestrated` |
 | Profile | `monitoringworker` |
@@ -47,7 +47,7 @@ Formato válido literal:
 ```markdown
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `blocked` |
 ```
 
 Formato inválido literal, que debe lanzar `TableFormatError`:
@@ -92,4 +92,4 @@ marcar la tarea como terminada.
 
 ## Handoff
 
-Sin trabajo pendiente ni bloqueos.
+Bloqueada automáticamente tras tres rondas; consultar los logs del job.
