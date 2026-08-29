@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `in_progress` |
-| Owner | Hermes |
+| Status | `blocked` |
+| Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-29T08:59:22Z |
+| Updated | 2026-08-29T09:14:05Z |
 | Depends on | TASK-002 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -83,4 +83,4 @@ se habilita TASK-004.
 
 ## Handoff
 
-Sin trabajo pendiente ni bloqueos.
+Bloqueada automáticamente tras tres rondas; consultar los logs del job.
