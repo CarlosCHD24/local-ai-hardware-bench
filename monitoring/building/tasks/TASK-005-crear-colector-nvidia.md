@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `done` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-28T22:52:58Z |
+| Updated | 2026-08-29T12:27:00Z |
 | Depends on | TASK-004 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -84,4 +84,6 @@ Entregar el formato de `HERMES_TASK_GUIDE.md`. No buscar GPU en otros hosts.
 
 ## Handoff
 
-Sin trabajo pendiente ni bloqueos.
+Aceptada tras auditoría independiente: el contrato NVIDIA, los tests de
+monitorización, la ayuda de CLI y `git diff --check` terminaron correctamente.
+El contrato simula `nvidia-smi`; no se consultó ninguna GPU ni otro host.

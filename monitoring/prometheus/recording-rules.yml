@@ -1,0 +1,13 @@
+groups:
+  - name: local-ai-inference
+    rules:
+      - record: local_ai_input_tokens_total
+        expr: llamacpp:prompt_tokens_total + llamacpp:prompt_tokens_cached_total
+      - record: local_ai_all_tokens_total
+        expr: local_ai_input_tokens_total + llamacpp:tokens_predicted_total
+      - record: local_ai_cache_ratio
+        expr: llamacpp:prompt_tokens_cached_total / clamp_min(local_ai_input_tokens_total, 1)
+      - record: local_ai_prompt_tokens_per_second
+        expr: rate(llamacpp:prompt_tokens_total[5m])
+      - record: local_ai_generated_tokens_per_second
+        expr: rate(llamacpp:tokens_predicted_total[5m])

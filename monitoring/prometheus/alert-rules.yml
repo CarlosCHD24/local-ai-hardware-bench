@@ -1,0 +1,9 @@
+groups:
+  - name: local-ai-availability
+    rules:
+      - alert: LocalAiServerDown
+        expr: up{job="local-ai-server"} == 0
+        for: 2m
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 2m

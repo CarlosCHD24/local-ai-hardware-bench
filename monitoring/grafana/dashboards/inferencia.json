@@ -1,0 +1,10 @@
+{
+  "title": "Inferencia local",
+  "schemaVersion": 39,
+  "panels": [
+    {"title": "Disponibilidad", "type": "stat", "targets": [{"expr": "up{job=\"local-ai-server\"}"}]},
+    {"title": "Tokens generados/s", "type": "timeseries", "targets": [{"expr": "local_ai_generated_tokens_per_second"}]},
+    {"title": "Prompt tokens/s", "type": "timeseries", "targets": [{"expr": "local_ai_prompt_tokens_per_second"}]},
+    {"title": "Ratio de caché", "type": "timeseries", "targets": [{"expr": "local_ai_cache_ratio"}]}
+  ]
+}
