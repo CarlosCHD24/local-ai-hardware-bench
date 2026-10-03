@@ -185,7 +185,7 @@ Contratos/tests contra los que debe validarse (sin modificarlos):
 | 1. perfilar y endurecer preflight (dev/server, --json) | hecho |
 | 2. comprobar listeners 9100/9090/3000 en loopback | hecho (torno 5: `check_listeners.py` + 9 tests) |
 | 3. validar textfile collector NVIDIA (frescura/contenido) | hecho (torno 6: `check_nvidia_textfile.py` + 9 tests) |
-| 4. integrar validadores y promtool/systemd-analyze | pendiente |
+| 4. integrar validadores y promtool/systemd-analyze | hecho (torno 7: validadores + tools + 10 tests) |
 | 5. tests de preflight fuera de `contract_tests/` | hecho (torno 4: `test_preflight.py`, 9 tests) |
 
 ### Verificación del paso 1 (Torno 4)
@@ -261,3 +261,41 @@ Comandos ejecutados:
 Resultado del pytest: **63 passed, 15 subtests passed, 0 failed, 0 errors**
 (54 previos + 9 nuevos en `monitoring/tests/test_check_nvidia_textfile.py`). No
 se ha modificado `monitoring/contract_tests/` ni `nvidia_textfile.py`.
+
+### Verificación del paso 4 (Torno 7)
+
+`monitoring/preflight.py` integra ahora, en este orden:
+
+- `validate_prometheus` y `validate_operation` por **import directo** (sin
+  subprocess). Ambos son ejecutables en local (leen artefactos versionados, no
+  dependen del host de producción), por lo que se ejecutan en los dos perfiles
+  como checks obligatorios. No hizo falta un check `server-only` ni
+  `--require-alertmanager`.
+- `promtool check config monitoring/prometheus/prometheus.yml` y
+  `systemd-analyze verify monitoring/systemd/*.service/*.timer` como binarios
+  externos vía `subprocess.run`. Regla de oro: ausentes => `WARNING` en `dev`
+  (exit 0) y `ERROR` en `server` (exit 1). Si `promtool` está presente y falla,
+  bloquea en ambos perfiles (valida un fichero versionado); un fallo de
+  `systemd-analyze` (dependiente de binarios del host) se degrada a `WARNING` en
+  `dev` y bloquea en `server`.
+
+`--json` sigue siendo válido y añade la clave `tool` sólo a los checks de
+binario externo (`promtool`, `systemd-analyze`). El perfil `server` se verifica
+contra simulación (`which`/runner inyectados), no contra la RTX (red 3.x fuera
+de ruta).
+
+Comandos ejecutados:
+
+```sh
+# dev real: promtool ausente; systemd-analyze presente pero falla por binarios del host
+.venv/bin/python monitoring/preflight.py --profile dev          # exit 0
+# dev simulado con promtool y systemd-analyze ausentes -> 2 warnings
+.venv/bin/python monitoring/preflight.py --profile dev          # exit 0 (which inyectado)
+# server simulado sin promtool/systemd-analyze -> 2 errores
+.venv/bin/python monitoring/preflight.py --profile server       # exit 1 (which inyectado)
+.venv/bin/python -m pytest monitoring/tests monitoring/contract_tests -q --no-header -o 'testpaths='
+```
+
+Resultado del pytest: **73 passed, 15 subtests passed, 0 failed, 0 errors**
+(63 previos + 10 nuevos en `monitoring/tests/test_preflight_tools.py`). No se ha
+modificado `monitoring/contract_tests/` ni `validate_prometheus.py`.

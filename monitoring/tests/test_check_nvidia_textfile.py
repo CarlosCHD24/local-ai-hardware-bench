@@ -8,9 +8,14 @@ import contextlib
 import io
 import json
 import os
+import subprocess
 import time
 
 from monitoring import check_nvidia_textfile, nvidia_metrics, nvidia_textfile, preflight
+
+
+def _ok_runner(command, **kwargs):
+    return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
 
 def _content(success=1, skip=()):
@@ -124,7 +129,10 @@ def test_preflight_server_with_textfile_dir(tmp_path):
                 str(tmp_path),
                 "--json",
             ],
-            which=_which_factory({"systemctl", "nvidia-smi"}),
+            which=_which_factory(
+                {"systemctl", "nvidia-smi", "promtool", "systemd-analyze"}
+            ),
+            runner=_ok_runner,
             textfile_now=time.time(),
         )
     assert code == 0

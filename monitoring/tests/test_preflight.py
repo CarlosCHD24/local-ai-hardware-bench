@@ -7,9 +7,18 @@ depender del hardware real (la máquina de desarrollo no tiene GPU).
 import contextlib
 import io
 import json
+import subprocess
 import unittest
 
 from monitoring import preflight
+
+
+ALL_TOOLS = {"systemctl", "nvidia-smi", "promtool", "systemd-analyze"}
+
+
+def _ok_runner(command, **kwargs):
+    """Runner simulado que hace exitoso cualquier binario externo."""
+    return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
 
 def _which_factory(available):
@@ -22,10 +31,13 @@ def _which_factory(available):
 class PreflightProfileTests(unittest.TestCase):
     """Comportamiento de los perfiles ``dev`` y ``server``."""
 
-    def _run(self, argv, available):
+    def _run(self, argv, available, runner=None):
+        kwargs = {"which": _which_factory(available)}
+        if runner is not None:
+            kwargs["runner"] = runner
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
-            code = preflight.main(argv, which=_which_factory(available))
+            code = preflight.main(argv, **kwargs)
         return code, output.getvalue()
 
     def test_dev_without_gpu_exits_zero(self):
@@ -51,7 +63,7 @@ class PreflightProfileTests(unittest.TestCase):
 
     def test_server_with_gpu_exits_zero(self):
         code, _ = self._run(
-            ["--profile", "server"], {"systemctl", "nvidia-smi"}
+            ["--profile", "server"], ALL_TOOLS, runner=_ok_runner
         )
         self.assertEqual(code, 0)
 
@@ -70,10 +82,13 @@ class PreflightProfileTests(unittest.TestCase):
 class PreflightJsonTests(unittest.TestCase):
     """El modo ``--json`` emite un informe estructurado por check."""
 
-    def _run_json(self, argv, available):
+    def _run_json(self, argv, available, runner=None):
+        kwargs = {"which": _which_factory(available)}
+        if runner is not None:
+            kwargs["runner"] = runner
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
-            code = preflight.main(argv, which=_which_factory(available))
+            code = preflight.main(argv, **kwargs)
         return code, json.loads(output.getvalue())
 
     def test_dev_json_is_valid_and_reports_each_check(self):
@@ -108,7 +123,7 @@ class PreflightJsonTests(unittest.TestCase):
 
     def test_server_json_all_ok(self):
         code, payload = self._run_json(
-            ["--profile", "server", "--json"], {"systemctl", "nvidia-smi"}
+            ["--profile", "server", "--json"], ALL_TOOLS, runner=_ok_runner
         )
         self.assertEqual(code, 0)
         self.assertTrue(payload["ok"])
