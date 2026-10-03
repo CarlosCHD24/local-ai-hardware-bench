@@ -184,7 +184,7 @@ Contratos/tests contra los que debe validarse (sin modificarlos):
 | analisis de preflight.py (ambito vs TASK-010/015/016/018 y deployment) | hecho |
 | 1. perfilar y endurecer preflight (dev/server, --json) | hecho |
 | 2. comprobar listeners 9100/9090/3000 en loopback | hecho (torno 5: `check_listeners.py` + 9 tests) |
-| 3. validar textfile collector NVIDIA (frescura/contenido) | pendiente |
+| 3. validar textfile collector NVIDIA (frescura/contenido) | hecho (torno 6: `check_nvidia_textfile.py` + 9 tests) |
 | 4. integrar validadores y promtool/systemd-analyze | pendiente |
 | 5. tests de preflight fuera de `contract_tests/` | hecho (torno 4: `test_preflight.py`, 9 tests) |
 
@@ -232,3 +232,32 @@ Comandos ejecutados:
 Resultado del pytest: **54 passed, 15 subtests passed, 0 failed, 0 errors**
 (45 previos + 9 nuevos en `monitoring/tests/test_check_listeners.py`). No se ha
 modificado `monitoring/contract_tests/`.
+
+### Verificación del paso 3 (Torno 6)
+
+`monitoring/check_nvidia_textfile.py` (nuevo, sólo stdlib) recorre los `*.prom`
+del directorio, parsea el formato de exposición Prometheus y emite un resultado
+por comprobación: presencia de ficheros, frescura (`--max-age`, por defecto 45 s
+frente al timer de 15 s de TASK-016), `local_ai_gpu_scrape_success == 1` y las 5
+métricas GPU nucleares (utilización, memoria usada/total, temperatura, potencia).
+Los nombres de fichero y métricas se derivan de `nvidia_textfile.NAME` y
+`nvidia_metrics.METRICS`, sin duplicar constantes. Soporta `--json` y exit 1 si
+falla cualquier comprobación.
+
+Integración en `monitoring/preflight.py`: `--textfile-dir` añade los checks del
+textfile NVIDIA a la salida de texto/JSON; sin la opción el comportamiento de
+los perfiles `dev`/`server` no cambia.
+
+Comandos ejecutados:
+
+```sh
+# demo: .prom fresco -> exit 0; .prom con mtime de hace 1 h -> exit 1
+.venv/bin/python monitoring/check_nvidia_textfile.py --directory /tmp/tf-demo   # exit 0
+.venv/bin/python monitoring/check_nvidia_textfile.py --directory /tmp/tf-old    # exit 1
+.venv/bin/python monitoring/preflight.py --profile server --textfile-dir /tmp/tf-demo
+.venv/bin/python -m pytest monitoring/tests monitoring/contract_tests -q --no-header -o 'testpaths='
+```
+
+Resultado del pytest: **63 passed, 15 subtests passed, 0 failed, 0 errors**
+(54 previos + 9 nuevos en `monitoring/tests/test_check_nvidia_textfile.py`). No
+se ha modificado `monitoring/contract_tests/` ni `nvidia_textfile.py`.
