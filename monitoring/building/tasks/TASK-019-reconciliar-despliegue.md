@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `review` |
+| Status | `done` |
 | Owner | — |
 | Created | 2026-08-29T22:30:00Z |
 | Updated | 2026-10-03T21:35:24Z |
@@ -54,3 +54,7 @@ Verificaciones y hechos contrastados:
   `taskctl.py`.
 - No se modificaron `monitoring/contract_tests/`, el servidor remoto ni
   claves.
+
+## Aprobacion del orquestador
+
+Aprobado el 2026-10-03: hechos contrastados contra systemd units reales (User=prometheus, User=carlos) y suite verde (73 passed). El hueco de retencion 30d queda documentado como requisito operativo, no inventado.
