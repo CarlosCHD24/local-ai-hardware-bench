@@ -25,7 +25,7 @@ en el documento de cada tarea.
 | TASK-016 | [Crear temporizador NVIDIA](tasks/TASK-016-crear-temporizador-nvidia.md) | `done` | — | TASK-015 |
 | TASK-017 | [Documentar el despliegue de monitoring](tasks/TASK-017-documentar-despliegue.md) | `done` | — | TASK-010 |
 | TASK-018 | [Validar artefactos operativos](tasks/TASK-018-validar-operacion.md) | `done` | — | TASK-015 |
-| TASK-019 | [Reconciliar documentación y despliegue](tasks/TASK-019-reconciliar-despliegue.md) | `ready` | — | TASK-018 |
+| TASK-019 | [Reconciliar documentación y despliegue](tasks/TASK-019-reconciliar-despliegue.md) | `review` | — | TASK-018 |
 | TASK-020 | [Medir frescura del colector NVIDIA](tasks/TASK-020-medir-frescura-nvidia.md) | `draft` | — | TASK-019 |
 | TASK-021 | [Capturar línea base de hardware](tasks/TASK-021-capturar-linea-base.md) | `draft` | — | TASK-020 |
 | TASK-022 | [Definir alertas de capacidad](tasks/TASK-022-definir-alertas-capacidad.md) | `draft` | — | TASK-021 |
@@ -34,8 +34,9 @@ en el documento de cada tarea.
 
 ## Próxima tarea
 
-La primera tarea accionable es `TASK-019`; las demás requieren contratos,
-línea base o decisiones explícitas antes de pasar a `ready`.
+No hay tareas accionables. `TASK-019` está en `review` y `TASK-020`..
+`TASK-024` siguen en `draft` a la espera de contrato, línea base o decisión
+explícita.
 
 ## Reglas del índice
 
