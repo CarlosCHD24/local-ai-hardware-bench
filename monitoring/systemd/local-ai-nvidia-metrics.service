@@ -1,0 +1,9 @@
+[Unit]
+Description=Write NVIDIA metrics for node_exporter
+
+[Service]
+Type=oneshot
+User=carlos
+Group=prometheus
+WorkingDirectory=/home/carlos/local-ai-hardware-bench
+ExecStart=/usr/bin/python3 -m monitoring.nvidia_textfile --directory /var/lib/node_exporter/textfile_collector --timeout 5

@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Status | `ready` |
+| Status | `done` |
 | Owner | — |
 | Created | 2026-08-28T22:52:58Z |
-| Updated | 2026-08-28T22:52:58Z |
+| Updated | 2026-08-29T12:00:00Z |
 | Depends on | TASK-003 |
 | Execution | `orchestrated` |
 | Execution manifest | Obligatorio por job |
@@ -71,4 +71,7 @@ contra el repositorio real.
 
 ## Handoff
 
-Sin trabajo pendiente ni bloqueos.
+Aceptada tras auditoría independiente: los contratos de `taskctl`, los tests
+de monitorización, el validador del tablero, la ayuda de CLI y `git diff --check`
+terminaron correctamente. Las transiciones se verificaron exclusivamente con
+los repositorios temporales de contrato, como exige esta tarea.
